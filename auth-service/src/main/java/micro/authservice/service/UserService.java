@@ -1,0 +1,79 @@
+package micro.authservice.service;
+
+import micro.authservice.dto.UserDTO;
+import micro.authservice.entity.Authority;
+import micro.authservice.entity.Usuario;
+import micro.authservice.repository.AuthorityRepository;
+import micro.authservice.repository.UsuarioRepository;
+import micro.authservice.security.AuthorityConstant; // Asegúrate que el path sea correcto
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@Service
+@Transactional
+public class UserService {
+
+    private final Logger log = LoggerFactory.getLogger(UserService.class);
+    private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthorityRepository authorityRepository;
+
+    public UserService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, AuthorityRepository authorityRepository) {
+        this.usuarioRepository = usuarioRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authorityRepository = authorityRepository;
+    }
+
+    public Optional<Usuario> getUserByUsername(String username) {
+        return usuarioRepository.findByUsername(username.toLowerCase());
+    }
+
+    public Usuario registerUser(UserDTO userDTO) {
+        if (usuarioRepository.findByUsername(userDTO.getUsername().toLowerCase()).isPresent()) {
+            throw new UsernameAlreadyUsedException();
+        }
+
+        Usuario newUser = new Usuario();
+        String encryptedPassword = passwordEncoder.encode(userDTO.getPassword());
+        newUser.setUsername(userDTO.getUsername().toLowerCase());
+        newUser.setPassword(encryptedPassword);
+
+        Set<Authority> authorities = new HashSet<>();
+        if (userDTO.getAuthorities() == null || userDTO.getAuthorities().isEmpty()) {
+            // Asignar rol USER por defecto si no se especifican roles
+            authorityRepository.findByName(AuthorityConstant.USER)
+                    .ifPresentOrElse(authorities::add,
+                            () -> { throw new AuthorityNotFoundException(AuthorityConstant.USER); });
+        } else {
+            authorities = userDTO.getAuthorities().stream()
+                    .map(authorityString -> authorityRepository.findByName(authorityString)
+                            .orElseThrow(() -> new AuthorityNotFoundException(authorityString)))
+                    .collect(Collectors.toSet());
+        }
+        newUser.setAuthorities(authorities);
+        usuarioRepository.save(newUser);
+        log.debug("Created Information for User: {}", newUser);
+        return newUser;
+    }
+
+    // Excepciones personalizadas (puedes ponerlas en un paquete 'exception')
+    public static class UsernameAlreadyUsedException extends RuntimeException {
+        public UsernameAlreadyUsedException() {
+            super("Login name already used!");
+        }
+    }
+
+    public static class AuthorityNotFoundException extends RuntimeException {
+        public AuthorityNotFoundException(String authority) {
+            super("Authority " + authority + " not found!");
+        }
+    }
+
+}

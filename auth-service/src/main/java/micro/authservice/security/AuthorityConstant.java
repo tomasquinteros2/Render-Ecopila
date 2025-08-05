@@ -1,0 +1,11 @@
+package micro.authservice.security;
+
+public final class AuthorityConstant {
+
+    private AuthorityConstant() {
+    }
+
+    public static final String ADMIN = "ADMIN";
+    public static final String USER = "USER";
+    // Puedes añadir más roles si los necesitas
+}

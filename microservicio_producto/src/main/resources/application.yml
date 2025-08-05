@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: microservicio-producto
+  jpa:
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+feign:
+  client:
+    config:
+      default:
+        decode404: false
+        fallback: com.ecopila.microservicio.dolar.DolarClientFallback
+app:
+  storage:
+    local: /data/comprobantes
+    backup: /data/comprobantesBackup
+    comprobante:
+      retencion:
+        dias: 90
+  offline-mode: true
+management:
+  tracing:
+    sampling:
+      probability: 1.0
