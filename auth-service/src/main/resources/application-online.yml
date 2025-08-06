@@ -1,0 +1,21 @@
+spring:
+  config:
+    activate:
+      on-profile: online
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://postgres-db:5432/ecopila_db_online
+    username: admin
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://eureka-service-online:8761/eureka/
+  instance:
+    prefer-ip-address: true
+server:
+  port: 8086

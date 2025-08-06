@@ -1,0 +1,115 @@
+package micro.microservicio_producto.entities;
+
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Entity
+@Getter
+@Setter
+// CAMBIO: Excluimos las relaciones ManyToMany del método toString() para evitar recursión infinita y LazyInitializationException.
+@ToString(exclude = {"productosRelacionados", "relacionadoCon"})
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id"
+)
+public class Producto {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column
+    private String codigo_producto;
+
+    @Column
+    private String descripcion;
+
+    @Column
+    private int cantidad;
+
+    // --- CAMPOS MONETARIOS CON BIGDECIMAL ---
+    @Column(precision = 19, scale = 4)
+    private BigDecimal iva;
+
+    @Column(precision = 19, scale = 4)
+    private BigDecimal precio_publico;
+
+    @Column(precision = 19, scale = 4)
+    private BigDecimal resto;
+
+    @Column(precision = 19, scale = 4)
+    private BigDecimal precio_sin_redondear;
+
+    @Column(precision = 19, scale = 4)
+    private BigDecimal precio_publico_us;
+
+    @Column(precision = 19, scale = 4)
+    private BigDecimal porcentaje_ganancia;
+
+    @Column(precision = 19, scale = 4)
+    private BigDecimal costo_dolares;
+
+    @Column(precision = 19, scale = 4)
+    private BigDecimal costo_pesos;
+
+    @Column(precision = 19, scale = 4)
+    private BigDecimal precio_sin_iva;
+    // --- FIN CAMPOS MONETARIOS ---
+
+    @Column
+    private LocalDate fecha_ingreso;
+
+    @Column
+    private Long proveedorId;
+
+    @Column
+    private Long tipoProductoId;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "productos_relacionados",
+            joinColumns = @JoinColumn(name = "producto_id"),
+            inverseJoinColumns = @JoinColumn(name = "producto_relacionado_id")
+    )
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonBackReference
+    private Set<Producto> productosRelacionados = new HashSet<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "productosRelacionados")
+    private Set<Producto> relacionadoCon = new HashSet<>();
+
+    @JsonProperty("productosRelacionadosIds")
+    public List<Long> getProductosRelacionadosIds() {
+        if (productosRelacionados == null) {
+            return List.of();
+        }
+        return productosRelacionados.stream()
+                .map(Producto::getId)
+                .collect(Collectors.toList());
+    }
+
+    public void agregarRelacion(Producto producto) {
+        this.productosRelacionados.add(producto);
+        producto.getProductosRelacionados().add(this);
+    }
+
+    public void eliminarRelacion(Producto producto) {
+        this.productosRelacionados.remove(producto);
+        producto.getProductosRelacionados().remove(this);
+    }
+
+}

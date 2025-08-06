@@ -1,0 +1,62 @@
+server:
+  port: 8090
+spring:
+  application.name: gateway
+  main:
+    web-application-type: reactive
+  cloud:
+    gateway:
+      routes:
+        # Ruta para el servicio de autenticación
+        - id: auth-service
+          uri: lb://auth-service
+          predicates: [ Path=/api/auth/** ]
+          filters:
+            - StripPrefix=1
+
+        # Ruta para el servicio de cotización del dólar
+        - id: dolar-service
+          uri: lb://dolar-service
+          predicates: [ Path=/api/dolar/** ]
+          filters:
+            - StripPrefix=2
+            - name: CircuitBreaker
+              args:
+                name: dolarFallback
+                fallbackUri: forward:/fallback/dolar
+
+        # Ruta para el servicio de productos (incluye productos, ventas, etc.)
+        - id: producto-service
+          uri: lb://producto-service
+          predicates: [ Path=/api/producto/** ]
+          filters:
+            - StripPrefix=2
+
+        # Ruta para el servicio de proveedores
+        - id: proveedor-service
+          uri: lb://proveedor-service
+          predicates: [ Path=/api/proveedor/** ]
+          filters:
+            - StripPrefix=2
+
+        # Ruta para el servicio de tipos de producto
+        - id: tipo-producto-service
+          uri: lb://tipo-producto-service
+          predicates: [ Path=/api/tipo-producto/** ]
+          filters:
+            - StripPrefix=2
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+
+eureka:
+  client:
+    service-url:
+      # La URL de Eureka ahora se puede configurar con una variable de entorno
+      defaultZone: ${EUREKA_URI:http://eureka-server:8761/eureka}
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0

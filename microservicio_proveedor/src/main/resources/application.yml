@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: microservicio-proveedor
+  jpa:
+    properties:
+      hibernate:
+        globally_quoted_identifiers: true
+management:
+  tracing:
+    sampling:
+      probability: 1.0

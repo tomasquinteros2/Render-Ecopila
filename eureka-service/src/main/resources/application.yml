@@ -1,0 +1,46 @@
+# /eureka-service/src/main/resources/application.yml (Versión ÚNICA Y DEFINITIVA)
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-service # <-- La propiedad clave que debe estar presente
+  # Deshabilitamos la seguridad básica por defecto, ya que tenemos una SecurityConfig personalizada
+  security:
+    basic:
+      enabled: false
+  # Propiedad que estaba en offline.yml, la traemos aquí por si es necesaria
+  main:
+    allow-bean-definition-overriding: true
+
+eureka:
+  instance:
+    # Para la comunicación entre contenedores, es mejor usar el nombre del servicio.
+    # Eureka lo resolverá correctamente.
+    hostname: eureka-service
+  client:
+    # Un servidor Eureka no debe registrarse consigo mismo.
+    register-with-eureka: false
+    # No necesita obtener el registro de otros (porque es el único nodo).
+    fetch-registry: false
+    service-url:
+      # La URL que los clientes usarán para encontrar este servidor.
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    # Deshabilitar en desarrollo para que los servicios caídos se eliminen rápido del dashboard
+    enable-self-preservation: false
+    wait-time-in-ms-when-sync-empty: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+logging:
+  level:
+    com.netflix.eureka: DEBUG
+    com.netflix.discovery: DEBUG
+    org.springframework.web: DEBUG
+    # Apuntamos al paquete base de tu servicio para logs detallados.
+    micro.eurekaservice: DEBUG

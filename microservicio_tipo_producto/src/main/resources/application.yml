@@ -1,0 +1,9 @@
+spring:
+  profiles:
+    active: default
+  application:
+    name: microservicio-tipo-producto
+management:
+  tracing:
+    sampling:
+      probability: 1.0

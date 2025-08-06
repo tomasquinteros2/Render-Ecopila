@@ -1,0 +1,55 @@
+server:
+  port: 8083
+
+spring:
+  config:
+    activate:
+      on-profile: offline
+    import: optional:file:./config-fallback/ # Mantén esto si lo usas para otras configuraciones
+  datasource:
+    # Apuntamos a la base de datos PostgreSQL del entorno offline
+    url: jdbc:postgresql://postgres-db-offline:5432/ecopila_db_offline
+    driver-class-name: org.postgresql.Driver
+    username: admin
+    password: password
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  cloud:
+    config:
+      enabled: false # Deshabilita explícitamente el config server en modo offline
+    openfeign: # CAMBIO: Añadir configuración de Feign Clients
+      client:
+        config:
+          default: # Configuración por defecto para todos los Feign clients
+            connectTimeout: 5000
+            readTimeout: 5000
+          microservicio-dolar: # Nombre de tu interfaz FeignClient para Dolar
+            url: http://dolar-service:8082 # Usa el nombre del servicio de Docker Compose y su puerto
+          microservicio-tipo-producto: # Nombre de tu interfaz FeignClient para TipoProducto
+            url: http://tipo-producto-service:8085 # Usa el nombre del servicio de Docker Compose y su puerto (¡con guion bajo!)
+          microservicio-proveedor: # Nombre de tu interfaz FeignClient para Proveedor
+            url: http://proveedor-service:8084 # Usa el nombre del servicio de Docker Compose y su puerto
+  data:
+    redis:
+      host: redis
+      port: 6379
+  cache:
+    type: redis
+    redis:
+      time-to-live: 60000 # 1 minuto
+
+eureka:
+  client:
+    enabled: false
+    fetch-registry: false
+
+app:
+  offline-mode: true
+  storage:
+    archive: /data/ventas

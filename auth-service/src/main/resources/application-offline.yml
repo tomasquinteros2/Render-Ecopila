@@ -1,0 +1,18 @@
+spring:
+  config:
+    activate:
+      on-profile: offline
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://postgres-db-offline:5432/ecopila_db_offline
+    username: admin
+    password: password
+
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+  eureka:
+    client:
+      enabled: false
