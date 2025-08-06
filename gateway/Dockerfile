@@ -2,15 +2,20 @@
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# 1. Copiar solo los POMs para descargar dependencias
+# --- LA PARTE CLAVE ESTÁ AQUÍ ---
+# 1. Copia el pom.xml PADRE. Maven ahora sabe que esto es un multi-módulo.
 COPY pom.xml .
+
+# 2. Copia el pom.xml del MÓDULO específico.
 COPY gateway/pom.xml ./gateway/
 
-# 2. Descargar dependencias (Capa cacheable)
+# 3. Descarga dependencias. Esta capa se cachea y solo se ejecuta si los POMs cambian.
+#    Usa el POM del módulo para que solo descargue lo que 'gateway' necesita.
 RUN mvn -B -f gateway/pom.xml dependency:go-offline
 
-# 3. Copiar el resto del código fuente
-COPY . .
+# 4. AHORA SÍ, copia solo el código fuente del módulo que estás construyendo.
+COPY gateway/src ./gateway/src
+# --- FIN DE LA PARTE CLAVE ---
 
 # 4. Compilar la aplicación
 RUN mvn -B -f gateway/pom.xml clean package -DskipTests
