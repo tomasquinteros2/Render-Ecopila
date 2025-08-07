@@ -7,7 +7,7 @@ INSERT INTO sym_node_group (node_group_id, description) VALUES ('client_group', 
 -- #####################################################################
 -- # 2. Definir cómo se comunican los grupos (Bidireccional)
 -- #####################################################################
-INSERT INTO sym_node_group_link (source_node_group_id, target_node_group_id, data_event_action) VALUES ('master_group', 'client_group', 'W') ON CONFLICT (source_node_group_id, target_node_group_id) DO UPDATE SET data_event_action = 'W';
+INSERT INTO sym_node_group_link (source_node_group_id, target_node_group_id, data_event_action) VALUES ('master_group', 'client_group', 'P') ON CONFLICT (source_node_group_id, target_node_group_id) DO NOTHING;
 INSERT INTO sym_node_group_link (source_node_group_id, target_node_group_id, data_event_action) VALUES ('client_group', 'master_group', 'P') ON CONFLICT (source_node_group_id, target_node_group_id) DO NOTHING;
 
 -- #####################################################################
@@ -32,7 +32,6 @@ INSERT INTO sym_trigger (trigger_id, source_table_name, channel_id, sync_on_upda
 -- ✅ NUEVOS TRIGGERS PARA VENTAS
 INSERT INTO sym_trigger (trigger_id, source_table_name, channel_id, sync_on_update, sync_on_insert, sync_on_delete, last_update_time, create_time) VALUES ('venta_trigger', 'venta', 'venta_channel', 0, 1, 0, now(), now()) ON CONFLICT (trigger_id) DO NOTHING;
 INSERT INTO sym_trigger (trigger_id, source_table_name, channel_id, sync_on_update, sync_on_insert, sync_on_delete, last_update_time, create_time) VALUES ('venta_item_trigger', 'venta_item', 'venta_channel', 0, 1, 0, now(), now()) ON CONFLICT (trigger_id) DO NOTHING;
-INSERT INTO sym_trigger (trigger_id, source_table_name, channel_id, sync_on_update, sync_on_insert, sync_on_delete, last_update_time, create_time) VALUES ('usuario_authority_trigger', 'usuario_authority', 'auth_channel', 1, 1, 1, now(), now()) ON CONFLICT (trigger_id) DO NOTHING;
 
 -- #####################################################################
 -- # 5. Definir los Routers: a qué grupo de nodos se envían los datos
@@ -44,31 +43,25 @@ INSERT INTO sym_router (router_id, source_node_group_id, target_node_group_id, c
 -- # 6. Vincular Triggers a Routers (CONFIGURACIÓN BIDIRECCIONAL)
 -- #####################################################################
 
--- Orden 100: Tablas sin dependencias o maestras
-INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('proveedor_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO UPDATE SET initial_load_order = 100;
-INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('tipo_producto_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO UPDATE SET initial_load_order = 100;
-INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('authority_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO UPDATE SET initial_load_order = 100;
-INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('dolar_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO UPDATE SET initial_load_order = 100;
--- Orden 200: Tablas que dependen de las anteriores
-INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('producto_trigger', 'master_to_client', 200, now(), now()) ON CONFLICT (trigger_id, router_id) DO UPDATE SET initial_load_order = 200;
-INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('usuario_trigger', 'master_to_client', 200, now(), now()) ON CONFLICT (trigger_id, router_id) DO UPDATE SET initial_load_order = 200;
--- Orden 300: Tabla de unión que depende de 'usuario' y 'authority'
-INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('usuario_authority_trigger', 'master_to_client', 300, now(), now()) ON CONFLICT (trigger_id, router_id) DO UPDATE SET initial_load_order = 300;
+-- ## Reglas: del MAESTRO (Online) hacia el CLIENTE (Offline) ##
+INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('producto_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
+INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('proveedor_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
+INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('tipo_producto_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
+INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('dolar_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
+INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('usuario_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
+INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('authority_trigger', 'master_to_client', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
 
 -- ## Reglas: del CLIENTE (Offline) hacia el MAESTRO (Online) ##
--- Para la subida de datos, el orden no es tan crítico, pero es buena práctica mantenerlo.
--- Las ventas se suben al final.
 INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('producto_trigger', 'client_to_master', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
 INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('proveedor_trigger', 'client_to_master', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
 INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('tipo_producto_trigger', 'client_to_master', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
 INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('dolar_trigger', 'client_to_master', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
 INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('usuario_trigger', 'client_to_master', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
 INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('authority_trigger', 'client_to_master', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
-INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('usuario_authority_trigger', 'client_to_master', 100, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
-
--- SINCRONIZACIÓN UNIDIRECCIONAL DE VENTAS (Cliente -> Maestro)
+-- ✅ SINCRONIZACIÓN UNIDIRECCIONAL DE VENTAS (Cliente -> Maestro)
 INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('venta_trigger', 'client_to_master', 200, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
 INSERT INTO sym_trigger_router (trigger_id, router_id, initial_load_order, last_update_time, create_time) VALUES ('venta_item_trigger', 'client_to_master', 200, now(), now()) ON CONFLICT (trigger_id, router_id) DO NOTHING;
+
 
 -- #####################################################################
 -- # 7. Parámetros Adicionales (Corrección para PostgreSQL)
