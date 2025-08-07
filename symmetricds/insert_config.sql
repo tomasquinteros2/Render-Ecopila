@@ -7,7 +7,7 @@ INSERT INTO sym_node_group (node_group_id, description) VALUES ('client_group', 
 -- #####################################################################
 -- # 2. Definir cómo se comunican los grupos (Bidireccional)
 -- #####################################################################
-INSERT INTO sym_node_group_link (source_node_group_id, target_node_group_id, data_event_action) VALUES ('master_group', 'client_group', 'W') ON CONFLICT (source_node_group_id, target_node_group_id) DO NOTHING;
+INSERT INTO sym_node_group_link (source_node_group_id, target_node_group_id, data_event_action) VALUES ('master_group', 'client_group', 'W') ON CONFLICT (source_node_group_id, target_node_group_id) DO UPDATE SET data_event_action = 'W';
 INSERT INTO sym_node_group_link (source_node_group_id, target_node_group_id, data_event_action) VALUES ('client_group', 'master_group', 'P') ON CONFLICT (source_node_group_id, target_node_group_id) DO NOTHING;
 
 -- #####################################################################
