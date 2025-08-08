@@ -217,7 +217,7 @@ public class ProductoService {
 
     @Transactional
     @Profile("online")
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 0 */3 * * *")
     public void actualizarPreciosProgramado() {
         log.info("--- Iniciando tarea programada: Actualización de precios ---");
         BigDecimal valorDolar = obtenerValorDolar();
