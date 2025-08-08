@@ -35,6 +35,9 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> , JpaS
     @EntityGraph(attributePaths = {"productosRelacionados"})
     List<Producto> findAll(Specification<Producto> spec);
 
+    @Query("SELECT p FROM Producto p")
+    Stream<Producto> findAllAsStream();
+
     /**
      * Busca productos por descripción, cargando sus relaciones.
      */
