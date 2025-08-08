@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-@FeignClient(name = "microservicio-proveedor") // Ajusta el puerto
+@FeignClient(name = "MICROSERVICIO-PROVEEDOR") // Ajusta el puerto
 public interface ProveedorClient {
 
     @GetMapping("/proveedores/{id}")
