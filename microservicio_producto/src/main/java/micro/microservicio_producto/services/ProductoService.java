@@ -216,16 +216,18 @@ public class ProductoService {
 
     @Transactional
     @Profile("online")
-    @Scheduled(cron = "0 35 10 * * *")
+    @Scheduled(cron = "0 0 */3 * * *")
     public void actualizarPreciosProgramado() {
         log.info("--- Iniciando tarea programada: Actualización de precios ---");
         BigDecimal valorDolar = obtenerValorDolar();
-        List<Producto> productos = productoRepository.findAll();
-        for (Producto producto : productos) {
-            recalculatePrices(producto, valorDolar);
+        long productosActualizados = 0;
+        try (Stream<Producto> productoStream = productoRepository.findAllAsStream()) {
+            productoStream.forEach(producto -> {
+                recalculatePrices(producto, valorDolar);
+            });
+            productosActualizados = productoRepository.count();
         }
-        productoRepository.saveAll(productos);
-        log.info("--- Finalizada tarea programada: {} productos actualizados con valor de dólar {} ---", productos.size(), valorDolar);
+        log.info("--- Finalizada tarea programada: {} productos revisados y actualizados con valor de dólar {} ---", productosActualizados, valorDolar);
     }
 
 
