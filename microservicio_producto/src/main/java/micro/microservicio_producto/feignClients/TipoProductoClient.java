@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
-@FeignClient(name = "microservicio-tipo-producto")
+@FeignClient(name = "MICROSERVICIO-TIPO-PRODUCTO")
 public interface TipoProductoClient {
 
     @GetMapping("/tiposproducto/{id}")
