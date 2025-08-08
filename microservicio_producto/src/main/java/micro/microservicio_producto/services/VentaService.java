@@ -2,6 +2,7 @@ package micro.microservicio_producto.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import micro.microservicio_producto.exceptions.ResourceNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import micro.microservicio_producto.entities.DTO.*;
 import micro.microservicio_producto.entities.*;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,15 +35,13 @@ public class VentaService {
 
     private static final Logger log = LoggerFactory.getLogger(VentaService.class);
     private static final Pattern FULL_FORMAT_PATTERN = Pattern.compile("^[a-zA-Z]{2}\\d{6}$");
-
-    // Dependencias existentes
+    
     private final ProductoService productoService;
     private final ComprobanteService comprobanteService;
     private final VentaRepository ventaRepository;
     private final ProductoRepository productoRepository;
     private final VentaArchivadaRepository ventaArchivadaRepository;
 
-    // ✅ 1. AÑADIR ESTOS CAMPOS A LA CLASE
     private final ObjectMapper objectMapper;
 
     @Value("${app.storage.archive}")
@@ -55,27 +55,40 @@ public class VentaService {
         this.comprobanteService = comprobanteService;
         this.ventaRepository = ventaRepository;
         this.productoRepository = productoRepository;
-        // ✅ 2. INICIALIZAR EL ObjectMapper EN EL CONSTRUCTOR
         this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
         this.ventaArchivadaRepository = ventaArchivadaRepository;
     }
 
     @Transactional
     public VentaResponseDTO registrarVentaCompleta(VentaRequestDTO ventaRequest) {
-        // 1. Descontar stock
         List<ProductoDTO> productosVendidos = ventaRequest.getItems();
+        if (productosVendidos == null || productosVendidos.isEmpty()) {
+            throw new BusinessLogicException("La solicitud de venta no contiene ítems.");
+        }
+
+        List<Long> productoIds = productosVendidos.stream()
+                .map(ProductoDTO::getId)
+                .collect(Collectors.toList());
+
+        Map<Long, Producto> productosMap = productoRepository.findAllById(productoIds).stream()
+                .collect(Collectors.toMap(Producto::getId, producto -> producto));
+
+        if (productosMap.size() != productoIds.size()) {
+            throw new ResourceNotFoundException("Uno o más productos no fueron encontrados en la base de datos.");
+        }
+
         productoService.descontarProductos(productosVendidos);
-        // 2. Generar un nuevo número de comprobante
+
         String numeroComprobante = comprobanteService.generarNumeroComprobanteUnico();
-        // 3. Crear y guardar la entidad Venta
+
         Venta nuevaVenta = new Venta();
         nuevaVenta.setNumeroComprobante(numeroComprobante);
         nuevaVenta.setFechaVenta(LocalDateTime.now());
 
         BigDecimal totalVenta = BigDecimal.ZERO;
+
         for (ProductoDTO dto : productosVendidos) {
-            Producto producto = productoRepository.findById(dto.getId())
-                    .orElseThrow(() -> new BusinessLogicException("Producto no encontrado para la venta con ID: " + dto.getId()));
+            Producto producto = productosMap.get(dto.getId());
 
             VentaItem item = new VentaItem();
             item.setProductoId(producto.getId());
@@ -87,8 +100,10 @@ public class VentaService {
             nuevaVenta.getItems().add(item);
             totalVenta = totalVenta.add(producto.getPrecio_publico().multiply(new BigDecimal(dto.getCantidad())));
         }
+
         nuevaVenta.setTotalVenta(totalVenta);
         Venta ventaGuardada = ventaRepository.save(nuevaVenta);
+
         return mapToVentaResponseDTO(ventaGuardada);
     }
     @Transactional(readOnly = true)
@@ -108,24 +123,18 @@ public class VentaService {
         String numeroLower = numero.toLowerCase().trim();
         Matcher matcher = FULL_FORMAT_PATTERN.matcher(numeroLower);
         log.info("Buscando venta por parte numérica que termine en: {}", numeroLower);
-        // --- CASO 1: El usuario introdujo el formato completo (ej: "cu000005") ---
         if (matcher.matches()) {
             log.info("Buscando venta por formato completo: {}", numeroLower);
-            // Primero busca en la tabla "caliente" (ventas recientes)
             return ventaRepository.findByNumeroComprobante(numeroLower)
                     .map(this::mapToVentaResponseDTO)
-                    // Si no la encuentra, busca en la tabla "fría" (ventas archivadas)
                     .or(() -> buscarYConvertirVentaArchivada(numeroLower));
         }
 
-        // --- CASO 2: El usuario introdujo solo el número (ej: "5") ---
         try {
             long num = Long.parseLong(numero);
             String parteNumerica = String.format("%06d", num);
             log.info("Buscando venta por parte numérica que termine en: {}", parteNumerica);
 
-
-            // Si no está en la BD, buscar en el sistema de archivos por el sufijo
             return ventaRepository.findByNumeroComprobanteEndingWith(parteNumerica)
                     .map(this::mapToVentaResponseDTO)
                     .or(() -> buscarYConvertirVentaArchivadaPorSufijo(parteNumerica));
