@@ -1,16 +1,19 @@
 package micro.microservicio_dolar.services;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
-import micro.microservicio_dolar.entities.Dolar;
 import micro.microservicio_dolar.entities.dto.DolarApiResponseDTO;
+import micro.microservicio_dolar.entities.Dolar;
 import micro.microservicio_dolar.repository.DolarRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
@@ -35,56 +38,49 @@ public class DolarService {
     private final DolarRepository dolarRepository;
     private final RestTemplate restTemplate;
 
-    // Este valor por defecto ya no se usará para crear un dólar, pero es bueno tenerlo como fallback en otros lugares si fuera necesario.
     @Value("${app.dolar.default-price:1200.00}")
     private String defaultPriceStr;
 
     @Value("${app.offline-mode:false}")
     private boolean offlineMode;
 
+    @Value("${app.dolar.update-enabled:true}")
+    private boolean updateEnabled;
+
     public DolarService(DolarRepository dolarRepository, RestTemplate restTemplate) {
         this.dolarRepository = dolarRepository;
         this.restTemplate = restTemplate;
     }
 
-    // --- CAMBIO CLAVE: LÓGICA DE INICIALIZACIÓN CORREGIDA ---
     @Transactional
     public void init() {
         if (dolarRepository.count() == 0) {
-            log.info("No hay registro de Dólar en la base de datos. Intentando inicializar...");
+            log.info("No hay registro de Dólar en la base de datos. Creando uno inicial...");
+            BigDecimal initialPrice;
+            String initialName;
 
+            // ✅ Lógica de inicialización diferenciada
             if (offlineMode) {
-                // MODO OFFLINE: No se encontró un valor de dólar. No se crea nada.
-                // El sistema esperará a que SymmetricDS sincronice el valor desde el nodo maestro.
-                log.warn("MODO OFFLINE: No se encontró un valor de dólar inicial. El sistema esperará la sincronización desde la nube.");
+                // MODO OFFLINE: Arranca con el valor por defecto. Esperará la sincronización para el valor real.
+                initialPrice = new BigDecimal(defaultPriceStr);
+                initialName = "Dólar Oficial (Offline)";
+                log.info("Modo OFFLINE: Precio inicial establecido por defecto: {}. Esperando sincronización.", initialPrice);
             } else {
-                // MODO ONLINE: Intenta obtener el precio de la API.
-                log.info("MODO ONLINE: Intentando obtener el precio inicial del dólar desde la API externa...");
-                obtenerPrecioDolarDeApi().ifPresentOrElse(
-                        precioDeApi -> {
-                            // Si la API responde, crea el registro inicial.
-                            log.info("Precio inicial obtenido de la API: {}", precioDeApi);
-                            Dolar dolar = new Dolar();
-                            dolar.setNombre("Dólar Oficial");
-                            dolar.setPrecio(precioDeApi);
-                            dolarRepository.save(dolar);
-                            log.info("Registro de Dólar inicial creado con éxito desde la API.");
-                        },
-                        () -> {
-                            // Si la API falla, no se crea nada. Se esperará a la tarea programada.
-                            log.error("MODO ONLINE: No se pudo obtener el precio del dólar de la API al iniciar. El sistema funcionará sin precio hasta que la próxima actualización programada tenga éxito.");
-                        }
-                );
+                // MODO ONLINE: Intenta obtener el precio real de la API al arrancar.
+                initialPrice = obtenerPrecioDolarDeApi()
+                        .orElse(new BigDecimal(defaultPriceStr));
+                initialName = "Dólar Oficial";
+                log.info("Modo ONLINE: Precio inicial obtenido de la API (o por defecto si falla): {}", initialPrice);
             }
-        } else {
-            // Si ya existe un registro, simplemente lo logueamos y continuamos.
-            dolarRepository.findAll().stream().findFirst().ifPresent(dolar ->
-                    log.info("Ya existe un registro de Dólar en la base de datos. Se utilizará el valor existente: {}", dolar.getPrecio())
-            );
+
+            Dolar dolar = new Dolar();
+            dolar.setNombre(initialName);
+            dolar.setPrecio(initialPrice);
+            dolarRepository.save(dolar);
         }
     }
 
-    // --- MÉTODOS CRUD (Sin cambios) ---
+    // --- MÉTODOS CRUD ---
     @Cacheable("dolares")
     @Transactional
     public List<Dolar> findAll() {
@@ -144,7 +140,7 @@ public class DolarService {
     }
 
 
-    // --- LÓGICA DE ACTUALIZACIÓN (Sin cambios) ---
+    // --- LÓGICA DE ACTUALIZACIÓN ---
 
     @Transactional
     public Optional<BigDecimal> obtenerPrecioDolarDeApi() {
@@ -174,15 +170,15 @@ public class DolarService {
         }
     }
 
-    @Scheduled(cron = "0 30 * * * *") // Se ejecuta a los 30 minutos de cada hora
+    @Scheduled(cron = "0 30 * * * *")
     public void actualizarPrecioDolar() {
-        // No se ejecuta si el servicio está en modo offline o no tiene conexión
-        if (offlineMode || !isOnline()) {
-            return;
+        if (!isOnline()) {
+            return; // El método isOnline() ya loguea el warning.
         }
 
         log.info("MODO ONLINE: Iniciando tarea programada de actualización de precio del dólar.");
 
+        // ✅ 2. Se actualiza el precio SOLO si se obtiene un nuevo valor de la API.
         obtenerPrecioDolarDeApi().ifPresent(nuevoPrecio -> {
             log.info("Nuevo precio de dólar obtenido de la API: {}", nuevoPrecio);
 

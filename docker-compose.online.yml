@@ -9,7 +9,7 @@ services:
     ports: [ "9761:8761" ]
     environment:
       SPRING_PROFILES_ACTIVE: "online"
-    volumes: # <-- AÑADIDO: Para que Eureka recuerde los servicios registrados tras un reinicio
+    volumes:
       - eureka-data-online:/data
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
@@ -27,7 +27,6 @@ services:
       SPRING_PROFILES_ACTIVE: "online"
       EUREKA_URI: http://eureka-service-online:8761/eureka
       APPLICATION_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET: "hRFxCC9ibkLnqP9Js9FiWRbCme1dbLPLIRzQVPKmhK/LscULomJ/flJJpUaZ+M9fa+hT0X4gpeileNbQJrEBrw=="
-      JWT_BASE64_SECRET: "hRFxCC9ibkLnqP9Js9FiWRbCme1dbLPLIRzQVPKmhK/LscULomJ/flJJpUaZ+M9fa+hT0X4gpeileNbQJrEBrw=="
 
     depends_on:
       eureka-service-online:
@@ -41,7 +40,7 @@ services:
       POSTGRES_DB: ecopila_db_online
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
-    volumes: # <-- CORRECTO: Este volumen ya asegura los datos de tu negocio
+    volumes:
       - postgres-data-online:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U admin -d ecopila_db_online" ]
@@ -72,11 +71,10 @@ services:
   redis-online:
     image: redis:alpine
     container_name: redis_online
-    volumes: # <-- CORRECTO: Este volumen ya asegura los datos de la caché
+    volumes:
       - redis-data-online:/data
 
   # --- MICROSERVICIOS DE NEGOCIO (NUBE) ---
-  # (Estos servicios no necesitan volúmenes de datos porque usan la BD central de PostgreSQL)
   auth-service-online:
     build:
       context: .

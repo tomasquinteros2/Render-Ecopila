@@ -25,7 +25,6 @@ services:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
     volumes:
-      # ✅ CORRECTO: Solo el servicio de base de datos debe montar su propio volumen.
       - offline-db-volume:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U admin -d ecopila_db_offline" ]
@@ -60,7 +59,6 @@ services:
     ports: [ "8086:8086" ]
     environment:
       SPRING_PROFILES_ACTIVE: "offline"
-    # ❌ SECCIÓN 'volumes' ELIMINADA
     depends_on:
       eureka:
         condition: service_healthy
@@ -80,7 +78,6 @@ services:
     ports: [ "8082:8082" ]
     environment:
       SPRING_PROFILES_ACTIVE: "offline"
-    # ❌ SECCIÓN 'volumes' ELIMINADA
     depends_on:
       eureka:
         condition: service_healthy
@@ -100,7 +97,6 @@ services:
     ports: ["8083:8083"]
     environment:
       SPRING_PROFILES_ACTIVE: "offline"
-    # ❌ SECCIÓN 'volumes' ELIMINADA
     depends_on:
       eureka:
         condition: service_healthy
@@ -120,7 +116,6 @@ services:
     ports: [ "8084:8084" ]
     environment:
       SPRING_PROFILES_ACTIVE: "offline"
-    # ❌ SECCIÓN 'volumes' ELIMINADA
     depends_on:
       eureka:
         condition: service_healthy
@@ -140,7 +135,6 @@ services:
     ports: [ "8085:8085" ]
     environment:
       SPRING_PROFILES_ACTIVE: "offline"
-    # ❌ SECCIÓN 'volumes' ELIMINADA
     depends_on:
       eureka:
         condition: service_healthy
@@ -159,7 +153,6 @@ services:
       dockerfile: symmetricds/client/Dockerfile
     container_name: symmetricds_client
     ports: [ "8081:8081" ]
-    # ❌ SECCIÓN 'volumes' ELIMINADA
     depends_on:
       producto-service:
         condition: service_healthy
