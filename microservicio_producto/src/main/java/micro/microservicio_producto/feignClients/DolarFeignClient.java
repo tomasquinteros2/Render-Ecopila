@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 @FeignClient(name="microservicio-dolar")
 public interface DolarFeignClient {
 
-        @GetMapping("/{id}")
+        @GetMapping("/dolar/{id}")
         ResponseEntity<BigDecimal> getValorDolar(@PathVariable Integer id);
 
 }

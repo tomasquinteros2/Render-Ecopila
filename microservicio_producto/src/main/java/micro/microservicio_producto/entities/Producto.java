@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -19,7 +20,6 @@ import java.util.stream.Collectors;
 @Entity
 @Getter
 @Setter
-// CAMBIO: Excluimos las relaciones ManyToMany del método toString() para evitar recursión infinita y LazyInitializationException.
 @ToString(exclude = {"productosRelacionados", "relacionadoCon"})
 @JsonIdentityInfo(
         generator = ObjectIdGenerators.PropertyGenerator.class,
@@ -28,7 +28,12 @@ import java.util.stream.Collectors;
 public class Producto {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "producto_seq")
+    @SequenceGenerator(
+            name = "producto_seq",
+            sequenceName = "producto_id_seq",
+            allocationSize = 1
+    )
     private Long id;
 
     @Column
@@ -59,15 +64,19 @@ public class Producto {
     @Column(precision = 19, scale = 4)
     private BigDecimal porcentaje_ganancia;
 
-    @Column(precision = 19, scale = 4)
+    @Column(precision = 19, scale = 4,nullable = true)
     private BigDecimal costo_dolares;
 
-    @Column(precision = 19, scale = 4)
+    @Column(precision = 19, scale = 4,nullable = false)
     private BigDecimal costo_pesos;
 
     @Column(precision = 19, scale = 4)
     private BigDecimal precio_sin_iva;
-    // --- FIN CAMPOS MONETARIOS ---
+    // --- FIN CAMPOS MONETARIOS --- //
+
+    @Column(nullable = false)
+    @ColumnDefault("false")
+    private boolean costoFijo;
 
     @Column
     private LocalDate fecha_ingreso;

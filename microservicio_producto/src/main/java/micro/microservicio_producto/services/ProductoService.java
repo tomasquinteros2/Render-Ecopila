@@ -26,6 +26,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class ProductoService {
@@ -99,10 +100,8 @@ public class ProductoService {
 
     @Transactional
     public Producto save(Producto incomingProduct) {
-        // Usamos findBy para que el Optional sea más explícito
         Optional<Producto> existingProductOpt = productoRepository.findByCodigo_producto(incomingProduct.getCodigo_producto());
 
-        // Determina si estamos actualizando un producto existente o creando uno nuevo.
         Producto productToSave = existingProductOpt.orElse(incomingProduct);
 
         if (existingProductOpt.isPresent()) {
@@ -130,11 +129,14 @@ public class ProductoService {
         // Valida las relaciones (proveedor, tipo de producto)
         validarRelaciones(productToSave.getTipoProductoId(), productToSave.getProveedorId());
 
-        // 4. Recalcula siempre los precios para reflejar cualquier cambio
-        BigDecimal valorDolar = obtenerValorDolar();
-        recalculatePrices(productToSave, valorDolar);
+        if (!productToSave.isCostoFijo()) {
+            BigDecimal valorDolar = obtenerValorDolar();
+            recalculatePrices(productToSave, valorDolar);
+        } else {
+            // MODIFICACIÓN: Para costo fijo, mantener costo_pesos y calcular precios basados en él
+            calculateFixedCostPrices(productToSave);
+        }
 
-        // 5. Guarda y devuelve la entidad persistida
         return productoRepository.save(productToSave);
     }
 
@@ -143,10 +145,15 @@ public class ProductoService {
         Producto productoExistente = findById(id);
         log.info("Actualizando producto ID: {}", id);
         updateProductoFields(productoExistente, productoDetails);
-        BigDecimal valorDolar = obtenerValorDolar();
-        recalculatePrices(productoExistente, valorDolar);
-        Producto productoActualizado = productoRepository.save(productoExistente);
-        return productoActualizado;
+
+        if (!productoExistente.isCostoFijo()) {
+            BigDecimal valorDolar = obtenerValorDolar();
+            recalculatePrices(productoExistente, valorDolar);
+        } else {
+            calculateFixedCostPrices(productoExistente);
+        }
+
+        return productoRepository.save(productoExistente);
     }
 
     @Transactional
@@ -216,18 +223,42 @@ public class ProductoService {
 
     @Transactional
     @Profile("online")
-    @Scheduled(cron = "0 35 10 * * *")
+    @Scheduled(cron = "0 0 */3 * * *")
     public void actualizarPreciosProgramado() {
         log.info("--- Iniciando tarea programada: Actualización de precios ---");
         BigDecimal valorDolar = obtenerValorDolar();
-        List<Producto> productos = productoRepository.findAll();
-        for (Producto producto : productos) {
-            recalculatePrices(producto, valorDolar);
+        long productosActualizados = 0;
+
+        try (Stream<Producto> productoStream = productoRepository.findAllAsStream()
+                .filter(p -> !p.isCostoFijo())) {
+
+            productoStream.forEach(producto -> {
+                recalculatePrices(producto, valorDolar);
+            });
+            productosActualizados = productoRepository.countByCostoFijoIsFalse();
         }
-        productoRepository.saveAll(productos);
-        log.info("--- Finalizada tarea programada: {} productos actualizados con valor de dólar {} ---", productos.size(), valorDolar);
+        log.info("--- Finalizada tarea programada: {} productos actualizados con valor de dólar {} ---",
+                productosActualizados, valorDolar);
     }
 
+    private void calculateFixedCostPrices(Producto producto) {
+        if (producto.getCosto_pesos() == null || producto.getPorcentaje_ganancia() == null) {
+            log.warn("Producto ID {} es costo fijo pero falta costo_pesos o porcentaje_ganancia", producto.getId());
+            return;
+        }
+
+        BigDecimal cien = new BigDecimal("100");
+        BigDecimal porcentajeGanancia = producto.getPorcentaje_ganancia().divide(cien, 4, RoundingMode.HALF_UP);
+
+        BigDecimal precioSinRedondear = producto.getCosto_pesos().multiply(BigDecimal.ONE.add(porcentajeGanancia));
+        producto.setPrecio_sin_redondear(precioSinRedondear.setScale(4, RoundingMode.HALF_UP));
+
+        BigDecimal resto = producto.getResto() != null && producto.getResto().compareTo(BigDecimal.ZERO) > 0
+                ? producto.getResto()
+                : new BigDecimal("1000");
+        BigDecimal precioPublico = precioSinRedondear.divide(resto, 0, RoundingMode.CEILING).multiply(resto);
+        producto.setPrecio_publico(precioPublico.setScale(2, RoundingMode.HALF_UP));
+    }
 
     private void recalculatePrices(Producto producto, BigDecimal valorDolar) {
         if (producto.getPrecio_sin_iva() == null || producto.getIva() == null || producto.getPorcentaje_ganancia() == null) {
@@ -344,10 +375,7 @@ public class ProductoService {
             }
         }
 
-        // --- PASO 3: ESCRIBIR UNA SOLA VEZ ---
         if (!productsToPersist.isEmpty()) {
-            // Valida las relaciones de todos los productos antes de guardar.
-            // (Esta es una optimización opcional, podrías moverla dentro del bucle si prefieres).
             for (Producto p : productsToPersist) {
                 validarRelaciones(p.getTipoProductoId(), p.getProveedorId());
             }

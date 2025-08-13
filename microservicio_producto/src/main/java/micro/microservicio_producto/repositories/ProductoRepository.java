@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Repository
 public interface ProductoRepository extends JpaRepository<Producto, Long> , JpaSpecificationExecutor<Producto> {
@@ -27,6 +28,9 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> , JpaS
     @Override
     @EntityGraph(attributePaths = {"productosRelacionados"})
     List<Producto> findAll();
+
+    @Query("SELECT p FROM Producto p")
+    Stream<Producto> findAllAsStream();
 
     /**
      * Sobrescribe el método base para asegurar la carga de relaciones al usar especificaciones.
@@ -54,6 +58,8 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> , JpaS
      */
     @EntityGraph(attributePaths = {"productosRelacionados"})
     Optional<List<Producto>> findByTipoProductoId(Long id);
+
+    long countByCostoFijoIsFalse();
 
     @Query("SELECT p FROM Producto p WHERE p.codigo_producto IN :codigos")
     List<Producto> findAllByCodigo_productoIn(@Param("codigos") List<String> codigos);
