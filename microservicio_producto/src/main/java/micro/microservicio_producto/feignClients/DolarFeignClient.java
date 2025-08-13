@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
 
-@FeignClient(name="MICROSERVICIO-DOLAR")
+@FeignClient(name = "${feign.client.config.microservicio-dolar.name}")
 public interface DolarFeignClient {
 
         @GetMapping("/dolar/{id}")

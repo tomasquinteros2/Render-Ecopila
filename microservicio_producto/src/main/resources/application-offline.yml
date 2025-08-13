@@ -42,7 +42,15 @@ spring:
     type: redis
     redis:
       time-to-live: 60000 # 1 minuto
-
+feign:
+  client:
+    config:
+      microservicio-dolar:
+        name: microservicio-dolar
+      microservicio-proveedor:
+        name: microservicio-proveedor
+      microservicio-tipo-producto:
+        name: microservicio-tipo-producto
 eureka:
   client:
     enabled: false

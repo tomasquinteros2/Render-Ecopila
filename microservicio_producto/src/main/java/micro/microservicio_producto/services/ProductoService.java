@@ -173,7 +173,7 @@ public class ProductoService {
         for (ProductoDTO productoDTO : productos) {
             int updatedRows = productoRepository.descontar(productoDTO.getId(), productoDTO.getCantidad());
             if (updatedRows == 0) {
-                throw new BusinessLogicException("No se pudo descontar producto con ID " + productoDTO.getId() + " (cantidad insuficiente o no existe)");
+                throw new ResourceNotFoundException("No se pudo descontar el producto con ID " + productoDTO.getId() + " porque no fue encontrado.");
             }
         }
     }

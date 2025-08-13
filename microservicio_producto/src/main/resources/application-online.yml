@@ -13,7 +13,15 @@ spring:
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-
+feign:
+  client:
+    config:
+      microservicio-dolar:
+        name: MICROSERVICIO-DOLAR
+      microservicio-proveedor:
+        name: MICROSERVICIO-PROVEEDOR
+      microservicio-tipo-producto:
+        name: MICROSERVICIO-TIPO-PRODUCTO
 eureka:
   client:
     serviceUrl:

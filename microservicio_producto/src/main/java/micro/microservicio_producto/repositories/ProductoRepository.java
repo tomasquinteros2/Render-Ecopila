@@ -71,6 +71,6 @@ public interface ProductoRepository extends JpaRepository<Producto, Long> , JpaS
     void eliminarRelaciones(@Param("productoId") Long productoId);
 
     @Modifying
-    @Query(value = "UPDATE Producto p SET p.cantidad = p.cantidad - :cantidad WHERE p.id = :id AND p.cantidad >= :cantidad")
+    @Query(value = "UPDATE Producto p SET p.cantidad = p.cantidad - :cantidad WHERE p.id = :id")
     int descontar(@Param("id") Long id, @Param("cantidad") Integer cantidad);
 }
