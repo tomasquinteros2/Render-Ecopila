@@ -55,15 +55,15 @@ services:
     container_name: symmetricds_master
     ports: [ "31415:31415" ]
     volumes:
-      # El script y la app ya no se montan, son parte de la imagen.
-      # Solo montamos los datos persistentes y la configuración externa.
-      - symmetricds-master-data:/app/data
-      - ./symmetricds/master/engines:/app/engines
-      - ./symmetricds/insert_config.sql:/app/conf/insert_config.sql
+      # ✅ El script, la app y el SQL ya no se montan, ahora son parte de la imagen.
+      # Mantenemos solo los volúmenes para datos persistentes y configuración externa.
+      - symmetricds-master-data:/app/symmetric-ds-3.14.0/data
+      - symmetricds-master-logs:/app/symmetric-ds-3.14.0/logs
+      - ./symmetricds/master/engines:/app/symmetric-ds-3.14.0/engines
     depends_on:
       postgres-db:
         condition: service_healthy
-    # El comando ahora es mucho más simple
+    # El comando ahora es mucho más simple, solo ejecuta el script.
     command: /app/init-symmetric-master.sh
 
   redis-online:

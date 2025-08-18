@@ -1,18 +1,29 @@
+# symmetricds/master/Dockerfile
+
 FROM openjdk:17-jdk-slim
 
-# Instala dependencias
-RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client sed && \
-    rm -rf /var/lib/apt/lists/*
+# Instala dependencias necesarias (cliente de postgres y sed)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    postgresql-client \
+    sed \
+    && rm -rf /var/lib/apt/lists/*
 
+# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copia la aplicación SymmetricDS
-COPY symmetricds/symmetric-ds-3.14.0/ .
+# --- PASOS CLAVE DE LA CORRECCIÓN ---
+# 1. Copia la aplicación SymmetricDS a la imagen.
+#    Esta ruta es relativa a la raíz de tu proyecto (el 'build context').
+COPY symmetricds/symmetric-ds-3.14.0/ ./symmetric-ds-3.14.0/
 
-# Copia el script de inicio y dale permisos
+# 2. Copia el script de inicialización a la imagen.
 COPY symmetricds/master/init-symmetric-master.sh /app/init-symmetric-master.sh
+
+# 3. Copia el script de configuración SQL a la imagen.
+COPY symmetricds/insert_config.sql /app/insert_config.sql
+
+# 4. Corrige finales de línea (si vienes de Windows) y da permisos de ejecución al script.
 RUN sed -i 's/\r$//' /app/init-symmetric-master.sh && \
     chmod +x /app/init-symmetric-master.sh
 
-# El comando de inicio se define en docker-compose
-    
+# El comando de inicio se especificará en docker-compose.online.yml
