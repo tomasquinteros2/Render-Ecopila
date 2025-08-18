@@ -140,3 +140,4 @@ volumes:
   redis-data-online:
   symmetricds-master-data:
   eureka-data-online:
+  symmetricds-master-logs:
