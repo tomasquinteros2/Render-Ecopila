@@ -15,7 +15,6 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
 
     Optional<Venta> findByNumeroComprobante(String numeroComprobante);
 
-    // ✅ AÑADIDO PARA TESTEO: Busca ventas anteriores a una fecha y hora específicas.
     List<Venta> findAllByFechaVentaBefore(LocalDateTime fechaLimite);
 
     Optional<Venta> findByNumeroComprobanteEndingWith(String sufijo);

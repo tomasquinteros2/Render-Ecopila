@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/dolar") // ✅ MEJORA: Ruta base más clara y estándar.
+@RequestMapping("/dolar")
 public class DolarController {
 
     private final DolarService dolarService;

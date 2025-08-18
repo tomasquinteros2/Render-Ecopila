@@ -59,7 +59,7 @@ public class TokenProvider {
         return Jwts.builder()
                 .subject(authentication.getName())
                 .claim(AUTHORITIES_KEY, authorities)
-                .signWith(key, Jwts.SIG.HS512) // Especificar algoritmo
+                .signWith(key, Jwts.SIG.HS512)
                 .expiration(validity)
                 .issuedAt(new Date())
                 .compact();
@@ -67,7 +67,7 @@ public class TokenProvider {
 
     // El gateway usará su propio TokenProvider para validar y obtener la autenticación.
     // Este método podría ser útil aquí para pruebas internas o si este servicio
-    // necesitara consumir sus propios tokens, pero generalmente no es el caso.
+    // necesitara consumir sus propios tokens.
     public Authentication getAuthentication(String token) {
         Claims claims = jwtParser.parseSignedClaims(token).getPayload();
 
@@ -84,7 +84,6 @@ public class TokenProvider {
     public boolean validateToken(String authToken) {
         try {
             jwtParser.parseSignedClaims(authToken);
-            // No es necesario checkTokenExpiration aquí si el parser ya lo hace con verifyWith
             return true;
         } catch (ExpiredJwtException e) {
             log.trace("Expired JWT token.", e);
@@ -94,7 +93,7 @@ public class TokenProvider {
             log.trace("Malformed JWT token.", e);
         } catch (SignatureException e) {
             log.trace("Invalid JWT signature.", e);
-        } catch (IllegalArgumentException e) { // Jwts.parser().verifyWith() puede lanzar esto
+        } catch (IllegalArgumentException e) {
             log.error("Token validation error {}", e.getMessage());
         }
         return false;

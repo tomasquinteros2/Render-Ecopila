@@ -38,7 +38,7 @@ public class DolarService {
     private final DolarRepository dolarRepository;
     private final RestTemplate restTemplate;
 
-    @Value("${app.dolar.default-price:1200.00}")
+    @Value("${app.dolar.default-price:1300.00}")
     private String defaultPriceStr;
 
     @Value("${app.offline-mode:false}")
@@ -59,7 +59,6 @@ public class DolarService {
             BigDecimal initialPrice;
             String initialName;
 
-            // ✅ Lógica de inicialización diferenciada
             if (offlineMode) {
                 // MODO OFFLINE: Arranca con el valor por defecto. Esperará la sincronización para el valor real.
                 initialPrice = new BigDecimal(defaultPriceStr);
@@ -173,12 +172,12 @@ public class DolarService {
     @Scheduled(cron = "0 30 * * * *")
     public void actualizarPrecioDolar() {
         if (!isOnline()) {
-            return; // El método isOnline() ya loguea el warning.
+            return;
         }
 
         log.info("MODO ONLINE: Iniciando tarea programada de actualización de precio del dólar.");
 
-        // ✅ 2. Se actualiza el precio SOLO si se obtiene un nuevo valor de la API.
+        //  Se actualiza el precio SOLO si se obtiene un nuevo valor de la API.
         obtenerPrecioDolarDeApi().ifPresent(nuevoPrecio -> {
             log.info("Nuevo precio de dólar obtenido de la API: {}", nuevoPrecio);
 

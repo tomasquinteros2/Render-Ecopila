@@ -22,21 +22,12 @@ public class ProductoController {
 
     private final Logger log = LoggerFactory.getLogger( ProductoController.class );
 
-    // CAMBIO: Hacer final y usar inyección por constructor para todas las dependencias
     private final ProductoService productoService;
 
-    // CAMBIO: Constructor para inyección de dependencias
-    // Se elimina ProveedorClient ya que no se utiliza en este controlador.
     public ProductoController(ProductoService productoService) {
         this.productoService = productoService;
     }
 
-    //@GetMapping("/obtener")
-    public ResponseEntity<List<Producto>> getAllProductos(HttpServletRequest request) { // CAMBIO: Eliminar 'throws Exception'
-        log.info("Petición recibida en /productos/obtener.  URI: {}", request.getRequestURI());
-        List<Producto> productos = productoService.findAll();
-        return ResponseEntity.ok(productos);
-    }
     @GetMapping("")
     public List<Producto> getAll(
             @RequestParam(required = false) String search,
@@ -57,7 +48,6 @@ public class ProductoController {
         return ResponseEntity.ok(producto);
     }
     @GetMapping("/bytipo-producto/{id}")
-    // CAMBIO: Actualizar la llamada al método del servicio
     public ResponseEntity<List<Producto>> getProductoByTipoProducto(@PathVariable Long id) { // CAMBIO: Eliminar 'throws Exception'
         List<Producto> resultado = productoService.findByTipoProducto(id); // Antes: findByTipoProducto
         return ResponseEntity.ok(resultado);
@@ -68,11 +58,11 @@ public class ProductoController {
         Producto nuevoProducto = productoService.save(entity);
         return ResponseEntity.status(HttpStatus.CREATED).body(nuevoProducto);
     }
+
     @PostMapping("/cargar-masivo")
-    public ResponseEntity<?> cargarMasivo(@RequestBody List<Producto> productos){
+    public ResponseEntity<?> cargarArchivo(@RequestBody List<Producto> productos){
         log.info("Iniciando carga masiva de {} productos", productos.size());
         try {
-            // ✅ Llama al nuevo método de servicio optimizado para lotes.
             productoService.saveAllProducts(productos);
             return ResponseEntity.ok().body("Carga masiva procesada con éxito.");
         } catch (Exception e) {
@@ -81,7 +71,7 @@ public class ProductoController {
         }
     }
     @PutMapping("/{id}")
-    public ResponseEntity<Producto> updateProducto(@PathVariable Long id, @RequestBody Producto productoDetails) { // CAMBIO: Eliminar 'throws Exception'
+    public ResponseEntity<Producto> updateProducto(@PathVariable Long id, @RequestBody Producto productoDetails) {
         log.info("Actualizando producto ID: {}", id);
         Producto updatedProducto = productoService.update(id, productoDetails);
         return ResponseEntity.ok(updatedProducto);
@@ -99,18 +89,17 @@ public class ProductoController {
     }
 
     @PostMapping("/relaciones")
-    public ResponseEntity<String> agregarRelacion(@RequestBody ProductoRelacionadoDTO dto) { // CAMBIO: Eliminar 'throws Exception'
+    public ResponseEntity<String> agregarRelacion(@RequestBody ProductoRelacionadoDTO dto) {
         productoService.agregarRelacion(dto);
         return ResponseEntity.ok("Relación agregada exitosamente");
     }
     @DeleteMapping("/relaciones")
     public ResponseEntity<Void> eliminarRelacion(@RequestBody ProductoRelacionadoDTO dto) {
         productoService.eliminarRelacion(dto);
-        // Devolvemos 204 No Content, que es el estándar para operaciones DELETE exitosas.
         return ResponseEntity.noContent().build();
     }
     @GetMapping("/{id}/relacionados")
-    public ResponseEntity<List<ProductoRelacionadoResultadoDTO>> getRelacionados(@PathVariable Long id) { // CAMBIO: Eliminar 'throws Exception'
+    public ResponseEntity<List<ProductoRelacionadoResultadoDTO>> getRelacionados(@PathVariable Long id) {
         List<ProductoRelacionadoResultadoDTO> resultado = productoService.obtenerRelacionadosConProveedor(id);
         return ResponseEntity.ok(resultado);
     }

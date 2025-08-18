@@ -22,7 +22,6 @@ public class RestExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
-    // Un manejador genérico para cualquier otra excepción inesperada
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGlobalException(Exception ex, WebRequest request) {
         Map<String, String> body = Map.of(

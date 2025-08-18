@@ -133,7 +133,6 @@ public class ProductoService {
             BigDecimal valorDolar = obtenerValorDolar();
             recalculatePrices(productToSave, valorDolar);
         } else {
-            // MODIFICACIÓN: Para costo fijo, mantener costo_pesos y calcular precios basados en él
             calculateFixedCostPrices(productToSave);
         }
 
@@ -201,7 +200,6 @@ public class ProductoService {
         log.info("Relación entre producto ID {} y producto ID {} eliminada.", dto.getProductoId(), dto.getProductoRelacionadoId());
     }
 
-    // CAMBIO: Añadimos @Transactional para evitar LazyInitializationException al acceder a getProductosRelacionados()
     @Transactional(readOnly = true)
     public List<ProductoRelacionadoResultadoDTO> obtenerRelacionadosConProveedor(Long productoId) {
         Producto producto = findById(productoId);

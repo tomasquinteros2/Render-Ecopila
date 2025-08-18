@@ -36,7 +36,7 @@ public class Usuario implements Serializable {
 
     @JsonIgnore
     @NotNull
-    @Size(min = 60, max = 60) // BCrypt genera hashes de 60 caracteres
+    @Size(min = 60, max = 60)
     @Column(name = "password_hash", length = 60, nullable = false)
     private String password;
 

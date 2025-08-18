@@ -28,7 +28,6 @@ public class EurekaStatusController {
     }
 
     private int getCachedInstancesCount() {
-        // Lógica para obtener instancias en caché
         return 0;
     }
 

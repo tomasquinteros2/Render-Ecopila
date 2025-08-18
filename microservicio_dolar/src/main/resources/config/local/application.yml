@@ -1,7 +1,0 @@
-# Contenido mínimo para operar offline
-app:
-  storage:
-    local: /opt/eco-pila/comprobantes-offline
-eureka:
-  client:
-    enabled: false

@@ -12,8 +12,6 @@ import java.util.NoSuchElementException; // O la excepción que lance tu servici
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Este método manejará las excepciones cuando un recurso no se encuentra.
-    // Asegúrate que tu DolarService.getValorDolar(id) lance esta excepción.
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Map<String, String>> handleNotFoundException(NoSuchElementException ex, WebRequest request) {
         Map<String, String> body = Map.of(

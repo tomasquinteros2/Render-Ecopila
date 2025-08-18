@@ -39,22 +39,6 @@ public class ComprobanteController {
             throw new Exception(e.getMessage());
         }
     }
-/*
-    @GetMapping("/{numero}")
-    public ResponseEntity<Resource> obtenerComprobante(@PathVariable String numero) throws Exception {
-        return comprobanteService.obtenerComprobante(numero)
-                .map(comprobante -> {
-                    String contenido = comprobante.getContenidoHtml();
-                    ByteArrayResource resource = new ByteArrayResource(contenido.getBytes());
-
-                    return ResponseEntity.ok()
-                            .header(HttpHeaders.CONTENT_TYPE, "text/html")
-                            .header(HttpHeaders.CONTENT_DISPOSITION,
-                                    "attachment; filename=comprobante_" + numero + ".html")
-                            .body(resource);
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }*/
     @PostMapping("")
     public ResponseEntity<Map<String, String>> generarComprobante(@RequestBody String htmlComprobante) {
         try {

@@ -12,7 +12,7 @@ import java.util.List;
 public interface ProveedorClient {
 
     @GetMapping("/proveedores/{id}")
-    ResponseEntity<ProveedorDTO> getProveedorById(@PathVariable Long id); // Tipo concreto
+    ResponseEntity<ProveedorDTO> getProveedorById(@PathVariable Long id);
 
     @GetMapping("/proveedores")
     List<ProveedorDTO> getAllProveedores();

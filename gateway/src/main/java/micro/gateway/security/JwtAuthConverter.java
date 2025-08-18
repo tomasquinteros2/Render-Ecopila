@@ -37,8 +37,7 @@ public class JwtAuthConverter implements Converter<Jwt, Mono<AbstractAuthenticat
             return Collections.emptyList();
         }
 
-        // CAMBIO: Eliminamos la adición del prefijo "ROLE_".
-        // Ahora convierte el String del token directamente en una autoridad.
+        //convierte el String del token directamente en una autoridad.
         return Arrays.stream(claim.split(","))
                 .map(String::trim)
                 .map(SimpleGrantedAuthority::new) // Usa el valor tal cual (ej: "ADMIN")

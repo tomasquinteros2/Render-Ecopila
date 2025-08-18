@@ -17,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/ventas")
 public class VentaController {
-    // ... (logger y constructor)
     private final Logger log = LoggerFactory.getLogger( VentaController.class );
 
     private final VentaService ventaService;

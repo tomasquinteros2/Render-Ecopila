@@ -42,21 +42,21 @@ public class VentaArchiveService {
      */
     // El cron original es "0 0 3 1 * ?" (a las 3am del día 1 de cada mes)
     // Para testear, lo cambiamos para que se ejecute cada minuto.
-    @Scheduled(cron = "0 */10 * * * ?")
+    @Scheduled(cron = "0 0 3 1 * ?")
     @Transactional
     public void archivarVentasDelMesAnterior() {
         // --- LÓGICA ORIGINAL (para producción) ---
-        // YearMonth mesAnterior = YearMonth.now().minusMonths(1);
-        // LocalDate fechaInicio = mesAnterior.atDay(1);
-        // LocalDate fechaFin = mesAnterior.atEndOfMonth();
-        // log.info("--- Iniciando proceso de archivado de ventas para el período: {} a {} ---", fechaInicio, fechaFin);
-        // List<Venta> ventasParaArchivar = ventaRepository.findAllByFechaVentaBetween(fechaInicio.atStartOfDay(), fechaFin.atTime(23, 59, 59));
+        YearMonth mesAnterior = YearMonth.now().minusMonths(1);
+        LocalDate fechaInicio = mesAnterior.atDay(1);
+        LocalDate fechaFin = mesAnterior.atEndOfMonth();
+        log.info("--- Iniciando proceso de archivado de ventas para el período: {} a {} ---", fechaInicio, fechaFin);
+        List<Venta> ventasParaArchivar = ventaRepository.findAllByFechaVentaBetween(fechaInicio.atStartOfDay(), fechaFin.atTime(23, 59, 59));
 
         // --- LÓGICA TEMPORAL (para testear) ---
         // Archiva todas las ventas que tengan más de 10 minutos de antigüedad.
-        LocalDateTime fechaLimite = LocalDateTime.now().minusMinutes(10);
-        log.info("--- (MODO TEST) Iniciando archivado de ventas anteriores a: {} ---", fechaLimite);
-        List<Venta> ventasParaArchivar = ventaRepository.findAllByFechaVentaBefore(fechaLimite);
+        //LocalDateTime fechaLimite = LocalDateTime.now().minusMinutes(10);
+        //log.info("--- (MODO TEST) Iniciando archivado de ventas anteriores a: {} ---", fechaLimite);
+        //List<Venta> ventasParaArchivar = ventaRepository.findAllByFechaVentaBefore(fechaLimite);
 
         if (ventasParaArchivar.isEmpty()) {
             log.info("No se encontraron ventas para archivar en el período.");

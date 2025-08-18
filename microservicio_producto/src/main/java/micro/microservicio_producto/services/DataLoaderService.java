@@ -121,7 +121,6 @@ public class DataLoaderService {
         p.setPrecio_sin_iva(new BigDecimal(record.get("US S/IVA").replace("$", "").trim()));
 
         // Asignar IDs de proveedor y tipo de producto si existen en el CSV
-        // Esto es un ejemplo, necesitarás ajustar los nombres de las columnas
         if (record.isMapped("PROVEEDOR_ID") && !record.get("PROVEEDOR_ID").isBlank()) {
             p.setProveedorId(Long.parseLong(record.get("PROVEEDOR_ID")));
         }

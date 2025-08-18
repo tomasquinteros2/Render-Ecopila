@@ -22,7 +22,7 @@ public class NroComprobante {
     @Column(nullable = false)
     private int numero;
 
-    @Lob // Para almacenar contenido HTML grande
+    @Lob
     private String contenidoHtml;
 
     private LocalDateTime fechaGeneracion;

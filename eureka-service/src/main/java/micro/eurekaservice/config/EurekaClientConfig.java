@@ -17,7 +17,7 @@ public class EurekaClientConfig {
                 .setIPAddr(config.getIpAddress())
                 .setPort(config.getNonSecurePort())
                 .setInstanceId(config.getInstanceId())
-                .setDataCenterInfo(config.getDataCenterInfo()) // ¡Añadir esta línea!
+                .setDataCenterInfo(config.getDataCenterInfo())
                 .build();
 
         return new ApplicationInfoManager(config, instanceInfo);
@@ -35,7 +35,6 @@ public class EurekaClientConfig {
         config.setSecurePort(443);
         config.setStatusPageUrlPath("/info");
 
-        // Añadir configuración de DataCenterInfo
         config.setDataCenterInfo(new MyDataCenterInfo(DataCenterInfo.Name.MyOwn));
 
         return config;

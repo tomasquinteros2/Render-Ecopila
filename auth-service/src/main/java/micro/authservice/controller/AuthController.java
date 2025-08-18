@@ -38,11 +38,10 @@ public class AuthController {
         Authentication authentication = authenticationManager.authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // Aquí podrías añadir lógica para "rememberMe" si lo deseas
         String jwt = tokenProvider.createToken(authentication, false);
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + jwt); // Añadir el token al header
+        httpHeaders.add(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
 
         return new ResponseEntity<>(new JwtTokenDTO(jwt), httpHeaders, HttpStatus.OK);
     }

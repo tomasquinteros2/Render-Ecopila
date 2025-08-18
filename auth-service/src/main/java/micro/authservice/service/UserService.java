@@ -63,7 +63,6 @@ public class UserService {
         return newUser;
     }
 
-    // Excepciones personalizadas (puedes ponerlas en un paquete 'exception')
     public static class UsernameAlreadyUsedException extends RuntimeException {
         public UsernameAlreadyUsedException() {
             super("Login name already used!");

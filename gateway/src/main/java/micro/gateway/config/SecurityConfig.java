@@ -38,13 +38,12 @@ public class SecurityConfig {
     public SecurityConfig() {
     }
 
-    // 1. AÑADIMOS EL BEAN DE CONFIGURACIÓN DE CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Permite peticiones desde el origen de tu PWA
+        // Permite peticiones desde el origen de la PWA
         configuration.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:4173"));
-        // Permite los métodos HTTP que necesitas
+        // Permite los métodos HTTP que necesita
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         // Permite todas las cabeceras
         configuration.setAllowedHeaders(List.of("*"));
@@ -52,14 +51,13 @@ public class SecurityConfig {
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Aplica esta configuración a todas las rutas
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, ReactiveJwtDecoder jwtDecoder) {
         http
-                // 2. APLICAMOS LA CONFIGURACIÓN DE CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchanges -> exchanges

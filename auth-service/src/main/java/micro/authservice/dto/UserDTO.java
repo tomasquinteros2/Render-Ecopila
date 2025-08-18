@@ -17,7 +17,7 @@ public class UserDTO {
     private String username;
 
     @NotBlank(message = "La contraseña es un campo requerido.")
-    @Size(min = 4, max = 100) // Ajusta según tus políticas de contraseña
+    @Size(min = 4, max = 100)
     private String password;
 
     @NotEmpty(message = "Los roles son un campo requerido.")

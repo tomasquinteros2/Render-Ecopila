@@ -24,7 +24,6 @@ public class RestExceptionHandler {
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
-    // CAMBIO: Añadir manejador para BusinessLogicException
     @ExceptionHandler(BusinessLogicException.class)
     public ResponseEntity<Map<String, String>> handleBusinessLogicException(BusinessLogicException ex, WebRequest request) {
         Map<String, String> body = Map.of(

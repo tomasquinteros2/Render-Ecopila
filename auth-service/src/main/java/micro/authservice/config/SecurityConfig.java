@@ -86,7 +86,6 @@ public class SecurityConfig {
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Swagger
                         .anyRequest().authenticated() // Todas las demás peticiones requieren autenticación
                 )
-                // Añadir nuestro filtro JWT antes del filtro de UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

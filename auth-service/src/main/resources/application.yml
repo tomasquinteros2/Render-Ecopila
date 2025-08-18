@@ -23,7 +23,7 @@ application:
   security:
     authentication:
       jwt:
-        base64-secret: "hRFxCC9ibkLnqP9Js9FiWRbCme1dbLPLIRzQVPKmhK/LscULomJ/flJJpUaZ+M9fa+hT0X4gpeileNbQJrEBrw=="
+        base64-secret: ${JWT_SECRET_KEY}
         token-validity-in-seconds: 86400
         token-validity-in-seconds-for-remember-me: 2592000
 management:

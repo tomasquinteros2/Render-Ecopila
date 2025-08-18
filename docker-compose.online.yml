@@ -55,18 +55,16 @@ services:
     container_name: symmetricds_master
     ports: [ "31415:31415" ]
     volumes:
-      - ./init-symmetric-master.sh:/app/init-symmetric-master.sh
-      - symmetricds-master-data:/app/symmetric-ds-3.14.0/data
-      - ./symmetricds/symmetric-ds-3.14.0:/app/symmetric-ds-3.14.0
-      - ./symmetricds/master/engines:/app/symmetric-ds-3.14.0/engines
-      - ./symmetricds/insert_config.sql:/app/symmetric-ds-3.14.0/conf/insert_config.sql
+      # El script y la app ya no se montan, son parte de la imagen.
+      # Solo montamos los datos persistentes y la configuración externa.
+      - symmetricds-master-data:/app/data
+      - ./symmetricds/master/engines:/app/engines
+      - ./symmetricds/insert_config.sql:/app/conf/insert_config.sql
     depends_on:
       postgres-db:
         condition: service_healthy
-    command: >
-      sh -c "
-        chmod +x /app/init-symmetric-master.sh &&
-        exec /app/init-symmetric-master.sh"
+    # El comando ahora es mucho más simple
+    command: /app/init-symmetric-master.sh
 
   redis-online:
     image: redis:alpine
@@ -83,6 +81,7 @@ services:
     ports: [ "9086:8086" ]
     environment:
       SPRING_PROFILES_ACTIVE: "online"
+      JWT_SECRET_KEY: "hRFxCC9ibkLnqP9Js9FiWRbCme1dbLPLIRzQVPKmhK/LscULomJ/flJJpUaZ+M9fa+hT0X4gpeileNbQJrEBrw=="
     depends_on:
       eureka-service-online:
         condition: service_healthy

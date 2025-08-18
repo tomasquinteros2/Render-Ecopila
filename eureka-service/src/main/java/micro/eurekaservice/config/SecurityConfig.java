@@ -22,11 +22,7 @@ public class SecurityConfig {
                                 .requestMatchers("/").permitAll()            // Permitir acceso al dashboard de Eureka UI en la raíz
                                 .requestMatchers("/actuator/**").permitAll() // Permitir acceso a los endpoints de Actuator (ej. health)
                                 .anyRequest().denyAll() // Opcional: Denegar cualquier otra petición no especificada.
-                        // O .anyRequest().authenticated() si tienes otros endpoints que proteger.
-                        // Para un servidor Eureka dedicado, denyAll() puede ser más seguro.
                 );
-        // No es necesario .httpBasic() si todos los paths accesibles son permitAll
-        // y spring.security.basic.enabled es false.
         return http.build();
     }
 }

@@ -20,7 +20,6 @@ import org.springframework.cloud.netflix.eureka.server.InstanceRegistry;
 
 import java.io.File;
 import java.io.IOException;
-// Imports no utilizados como java.nio.file.Files y java.nio.file.Paths pueden ser eliminados si no se usan en otra parte.
 import java.util.HashMap;
 import java.util.Map;
 
@@ -88,7 +87,7 @@ public class PersistentInstanceRegistry extends InstanceRegistry {
             this.getSortedApplications().forEach(app ->
                     app.getInstances().forEach(instance -> {
                         if (instance.getStatus() != null &&
-                                instance.getStatus() != InstanceInfo.InstanceStatus.DOWN && // Corregido: CANCELLED no es un estado estándar, DOWN sí.
+                                instance.getStatus() != InstanceInfo.InstanceStatus.DOWN &&
                                 instance.getStatus() != InstanceInfo.InstanceStatus.UNKNOWN) {
                             simplifiedRegistry.put(
                                     instance.getInstanceId(),
@@ -139,12 +138,10 @@ public class PersistentInstanceRegistry extends InstanceRegistry {
                         }
                     });
 
-                    // *** CORRECCIÓN AQUÍ ***
-                    // LeaseInfo es una clase de primer nivel, no una interna de InstanceInfo.
-                    // Su Builder también se accede directamente desde LeaseInfo.
+
                     LeaseInfo leaseInfo = LeaseInfo.Builder.newBuilder() // Acceso directo a LeaseInfo.Builder
-                            .setRenewalIntervalInSecs(30) // Valores típicos
-                            .setDurationInSecs(90)        // Valores típicos
+                            .setRenewalIntervalInSecs(30) // Valores
+                            .setDurationInSecs(90)        // Valores
                             .build();
                     builder.setLeaseInfo(leaseInfo); // El método setLeaseInfo en InstanceInfo.Builder espera un com.netflix.appinfo.LeaseInfo
 

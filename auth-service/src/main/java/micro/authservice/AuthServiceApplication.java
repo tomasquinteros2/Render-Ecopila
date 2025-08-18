@@ -36,7 +36,6 @@ public class AuthServiceApplication {
                 authorityRepository.save(userAuthority);
                 System.out.println("Created USER authority");
             }
-            // Puedes añadir más roles aquí si los necesitas
         };
     }
 }

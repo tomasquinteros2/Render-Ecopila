@@ -13,5 +13,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @EntityGraph(attributePaths = "authorities") // Carga las autoridades junto con el usuario
     Optional<Usuario> findOneWithAuthoritiesByUsernameIgnoreCase(String username);
 
-    Optional<Usuario> findByUsername(String username); // Método útil
+    Optional<Usuario> findByUsername(String username);
 }
