@@ -24,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.List;
@@ -67,6 +68,7 @@ public class DolarService {
             } else {
                 // MODO ONLINE: Intenta obtener el precio real de la API al arrancar.
                 initialPrice = obtenerPrecioDolarDeApi()
+                        .map(this::redondearPrecioDolar) //
                         .orElse(new BigDecimal(defaultPriceStr));
                 initialName = "Dólar Oficial";
                 log.info("Modo ONLINE: Precio inicial obtenido de la API (o por defecto si falla): {}", initialPrice);
@@ -171,25 +173,46 @@ public class DolarService {
 
     @Scheduled(cron = "0 30 * * * *")
     public void actualizarPrecioDolar() {
-        if (!isOnline()) {
+        if (!isOnline() || offlineMode || !updateEnabled) {
+            log.info("La actualización del dólar se omitirá. Online: {}, OfflineMode: {}, UpdateEnabled: {}", isOnline(), offlineMode, updateEnabled);
             return;
         }
 
         log.info("MODO ONLINE: Iniciando tarea programada de actualización de precio del dólar.");
 
-        //  Se actualiza el precio SOLO si se obtiene un nuevo valor de la API.
-        obtenerPrecioDolarDeApi().ifPresent(nuevoPrecio -> {
-            log.info("Nuevo precio de dólar obtenido de la API: {}", nuevoPrecio);
+        obtenerPrecioDolarDeApi().ifPresent(precioApi -> {
+            BigDecimal nuevoPrecioRedondeado = redondearPrecioDolar(precioApi);
+            log.info("Nuevo precio de dólar obtenido de la API: {}, redondeado a: {}", precioApi, nuevoPrecioRedondeado);
 
             dolarRepository.findAll().stream().findFirst().ifPresentOrElse(
                     dolar -> {
-                        dolar.setPrecio(nuevoPrecio);
-                        this.update(dolar.getId(), dolar); // Usamos update para invalidar caché
-                        log.info("Precio del dólar en la BD (master) actualizado a: {}. El cambio se replicará a los clientes.", nuevoPrecio);
+                        if (dolar.getPrecio().compareTo(nuevoPrecioRedondeado) != 0) {
+                            dolar.setPrecio(nuevoPrecioRedondeado);
+                            this.update(dolar.getId(), dolar);
+                            log.info("Precio del dólar en la BD (master) actualizado a: {}. El cambio se replicará a los clientes.", nuevoPrecioRedondeado);
+                        } else {
+                            log.info("El precio redondeado ({}) es el mismo que el actual en la BD. No se requiere actualización.", nuevoPrecioRedondeado);
+                        }
                     },
                     () -> log.error("Se obtuvo un precio de la API, pero no se encontró ningún registro de Dólar en la BD para actualizar.")
             );
         });
+    }
+
+    /**
+     * MÉTODO HELPER
+     * Redondea el precio del dólar hacia abajo al múltiplo de 50 más cercano.
+     * Ej: 1310 -> 1300, 1349 -> 1300, 1350 -> 1350, 1399 -> 1350.
+     * @param precioOriginal El precio obtenido de la API.
+     * @return El precio redondeado.
+     */
+    private BigDecimal redondearPrecioDolar(BigDecimal precioOriginal) {
+        if (precioOriginal == null) {
+            return null;
+        }
+        BigDecimal divisor = new BigDecimal("50");
+        BigDecimal resultadoDivision = precioOriginal.divide(divisor, 0, RoundingMode.FLOOR);
+        return resultadoDivision.multiply(divisor);
     }
 
     private boolean isOnline() {

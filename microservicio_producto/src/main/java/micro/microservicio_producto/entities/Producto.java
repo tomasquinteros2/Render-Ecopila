@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Entity
@@ -36,7 +37,7 @@ public class Producto {
     )
     private Long id;
 
-    @Column
+    @Column(nullable = true, unique = true)
     private String codigo_producto;
 
     @Column
@@ -100,6 +101,15 @@ public class Producto {
     @JsonIgnore
     @ManyToMany(mappedBy = "productosRelacionados")
     private Set<Producto> relacionadoCon = new HashSet<>();
+
+    @PrePersist
+    public void generarCodigoSiNulo() {
+        if (this.codigo_producto == null || this.codigo_producto.trim().isEmpty()) {
+            // Genera un código único usando un prefijo y los primeros 8 caracteres de un UUID.
+            // Ejemplo de resultado: "PROD-550E8400"
+            this.codigo_producto = "PROD-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
+    }
 
     @JsonProperty("productosRelacionadosIds")
     public List<Long> getProductosRelacionadosIds() {
