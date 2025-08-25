@@ -18,7 +18,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    table: flyway_schema_history_auth
 application:
   security:
     authentication:

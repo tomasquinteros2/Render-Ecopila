@@ -3,7 +3,6 @@ package micro.microservicio_proveedor.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
-
 import jakarta.transaction.Transactional;
 import micro.microservicio_proveedor.entities.Proveedor;
 import micro.microservicio_proveedor.exceptions.BusinessLogicException;
@@ -16,6 +15,8 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
+
+
 
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ public class ProveedorService {
         this.proveedorRepository = proveedorRepository;
         this.objectMapper = new ObjectMapper();
     }
+
     @Cacheable("proveedores")
     public List<Proveedor> findAll() {
         log.info("Buscando todos los proveedores.");
@@ -51,7 +53,13 @@ public class ProveedorService {
     @CacheEvict(value = "proveedores", allEntries = true)
     @Transactional
     public Proveedor save(Proveedor proveedor) {
+        if (proveedor.getNombre() != null && !proveedor.getNombre().trim().isEmpty()) {
+            proveedorRepository.findByNombre(proveedor.getNombre()).ifPresent(p -> {
+                throw new BusinessLogicException("Ya existe un proveedor con el nombre: " + proveedor.getNombre());
+            });
+        }
         Proveedor proveedorGuardado = proveedorRepository.save(proveedor);
+        log.info("Proveedor nuevo guardado: {}", proveedorGuardado);
         return proveedorGuardado;
     }
 

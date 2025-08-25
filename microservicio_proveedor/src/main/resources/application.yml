@@ -5,6 +5,12 @@ spring:
     properties:
       hibernate:
         globally_quoted_identifiers: true
+    hibernate:
+      ddl-auto: update
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    table: flyway_schema_history_proveedor
 management:
   tracing:
     sampling:
