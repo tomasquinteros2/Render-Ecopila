@@ -1,0 +1,151 @@
+services:
+  # --- INFRAESTRUCTURA DE LA NUBE ---
+
+  eureka-service-online:
+    build:
+      context: .
+      dockerfile: eureka-service/Dockerfile
+    container_name: eureka_service_online
+    ports: [ "9761:8761" ]
+    environment:
+      SPRING_PROFILES_ACTIVE: "online"
+    volumes:
+      - eureka-data-online:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports: [ "9090:8090" ]
+    environment:
+      SPRING_PROFILES_ACTIVE: "online"
+      EUREKA_URI: http://eureka-service-online:8761/eureka
+      APPLICATION_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET: "${JWT_SECRET}"
+    depends_on:
+      eureka-service-online:
+        condition: service_healthy
+
+  # --- BASE DE DATOS Y CACHÉ DE LA NUBE ---
+  postgres-db:
+    image: postgres:14-alpine
+    container_name: postgres_db_online
+    environment:
+      POSTGRES_DB: ${ONLINE_DB_NAME}
+      POSTGRES_USER: ${ONLINE_DB_USER}
+      POSTGRES_PASSWORD: ${ONLINE_DB_PASSWORD}
+    volumes:
+      - postgres-data-online:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${ONLINE_DB_USER} -d ${ONLINE_DB_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  symmetricds-master:
+    build:
+      context: .
+      dockerfile: symmetricds/master/Dockerfile
+    container_name: symmetricds_master
+    ports: [ "31415:31415" ]
+    environment:
+      - PGPASSWORD=${ONLINE_DB_PASSWORD} # Para que los scripts psql/pg_isready funcionen
+      - SYM_DB_PASSWORD=${ONLINE_DB_PASSWORD}
+      - SYM_SYNC_URL=http://${SYMMETRIC_MASTER_HOST}:31415/sync
+    volumes:
+      - symmetricds-master-data:/app/symmetric-ds-3.14.0/data
+      - symmetricds-master-logs:/app/symmetric-ds-3.14.0/logs
+      - ./symmetricds/master/engines:/app/symmetric-ds-3.14.0/engines
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo 'Replacing placeholders in master.properties...' &&
+        sed -i 's|db.password=.*|db.password=${SYM_DB_PASSWORD}|' /app/symmetric-ds-3.14.0/engines/master.properties &&
+        sed -i 's|sync.url=.*|sync.url=${SYM_SYNC_URL}|' /app/symmetric-ds-3.14.0/engines/master.properties &&
+        echo 'Placeholders replaced. Starting init script...' &&
+        /app/init-symmetric-master.sh
+      "
+
+
+  redis-online:
+    image: redis:alpine
+    container_name: redis_online
+    volumes:
+      - redis-data-online:/data
+
+  # --- MICROSERVICIOS DE NEGOCIO (NUBE) ---
+  # (Estos servicios no necesitan volúmenes de datos porque usan la BD central de PostgreSQL)
+  auth-service-online:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    container_name: auth_service_online
+    ports: [ "9086:8086" ]
+    environment:
+      SPRING_PROFILES_ACTIVE: "online"
+      JWT_SECRET_KEY: "${JWT_SECRET}"
+    depends_on:
+      eureka-service-online:
+        condition: service_healthy
+
+  proveedor-service-online:
+    build:
+      context: .
+      dockerfile: microservicio_proveedor/Dockerfile
+    container_name: proveedor_service_online
+    ports: [ "9084:8084" ]
+    environment:
+      SPRING_PROFILES_ACTIVE: "online"
+    depends_on:
+      eureka-service-online:
+        condition: service_healthy
+
+  tipo-producto-service-online:
+    build:
+      context: .
+      dockerfile: microservicio_tipo_producto/Dockerfile
+    container_name: tipo_producto_service_online
+    ports: [ "9085:8085" ]
+    environment:
+      SPRING_PROFILES_ACTIVE: "online"
+    depends_on:
+      eureka-service-online:
+        condition: service_healthy
+
+  dolar-service-online:
+    build:
+      context: .
+      dockerfile: microservicio_dolar/Dockerfile
+    container_name: dolar_service_online
+    ports: [ "9082:8082" ]
+    environment:
+      SPRING_PROFILES_ACTIVE: "online"
+    depends_on:
+      eureka-service-online:
+        condition: service_healthy
+
+  producto-service-online:
+    build:
+      context: .
+      dockerfile: microservicio_producto/Dockerfile
+    container_name: producto_service_online
+    ports: [ "9083:8083" ]
+    environment:
+      SPRING_PROFILES_ACTIVE: "online"
+    depends_on:
+      eureka-service-online:
+        condition: service_healthy
+
+# --- Declaración de todos los volúmenes nombrados ---
+volumes:
+  postgres-data-online:
+  redis-data-online:
+  symmetricds-master-data:
+  eureka-data-online:
