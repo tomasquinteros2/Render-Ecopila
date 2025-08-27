@@ -38,7 +38,7 @@ public class EurekaServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication app = new SpringApplication(EurekaServiceApplication.class);
-        // ✅ FORZAR el tipo de aplicación a SERVLET.
+        // FORZAR el tipo de aplicación a SERVLET.
         // Esto soluciona el problema de que Spring no detecta el entorno web.
         app.setWebApplicationType(WebApplicationType.SERVLET);
         app.run(args);

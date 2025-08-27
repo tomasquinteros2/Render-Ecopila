@@ -1,46 +1,48 @@
 #!/bin/sh
-# init-symmetric-master.sh (Versión Definitiva y Robusta)
+# init-symmetric-master.sh (Versión Limpia y Corregida)
 
-# --- Configuración del entorno ONLINE ---
-DB_HOST="postgres-db"
-DB_PORT="5432"
-DB_USER="admin"
-DB_NAME="ecopila_db_online"
-export PGPASSWORD="password"
+set -e
 
-echo "--> Esperando a PostgreSQL en ${DB_HOST}:${DB_PORT}..."
+# --- Variables ---
+SYM_ADMIN="/app/symmetric-ds-3.14.0/bin/symadmin"
+DB_SQL="/app/symmetric-ds-3.14.0/bin/dbsql"
+SYM_ENGINE="master"
+# CORRECCIÓN: Usar la ruta donde el Dockerfile copia el archivo
+CONFIG_SQL_FILE="/app/insert_config.sql"
+PG_HOST="postgres-db"
+PG_USER="admin"
+PG_DB="ecopila_db_online"
+INIT_FLAG_FILE="/app/symmetric-ds-3.14.0/data/.initialized"
 
-while ! psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c '\q' 2>/dev/null; do
-  >&2 echo "Postgres no está disponible - esperando..."
-  sleep 2
+# --- Iniciar directamente si ya está inicializado ---
+if [ -f "$INIT_FLAG_FILE" ]; then
+    echo "SymmetricDS Master ya está inicializado. Iniciando servidor..."
+    exec /app/symmetric-ds-3.14.0/bin/sym --port 31415 --server
+fi
+
+# --- Esperar a que PostgreSQL esté listo ---
+echo "Esperando a que PostgreSQL en $PG_HOST esté disponible..."
+# PGPASSWORD es inyectado por Docker Compose
+until pg_isready -h "$PG_HOST" -U "$PG_USER" -d "$PG_DB" -q; do
+  echo "PostgreSQL no está listo todavía. Esperando 5 segundos..."
+  sleep 5
 done
+echo "✅ PostgreSQL está listo."
 
->&2 echo "--> PostgreSQL está listo."
+# --- Inicializar SymmetricDS ---
+echo "Primera ejecución: Creando tablas de SymmetricDS..."
+$SYM_ADMIN --engine "$SYM_ENGINE" create-sym-tables
 
-# --- Proceso de Doble Arranque para evitar Race Conditions ---
+echo "Insertando configuración desde $CONFIG_SQL_FILE..."
+$DB_SQL --engine "$SYM_ENGINE" < "$CONFIG_SQL_FILE"
 
-# 1. Inicia una instancia TEMPORAL de SymmetricDS en segundo plano.
-#    Su único propósito es crear el esquema de tablas en la base de datos.
-echo "--> Iniciando instancia temporal de SymmetricDS para crear el esquema..."
-/app/symmetric-ds-3.14.0/bin/sym --port 31415 --server &
-# Guarda el Process ID (PID) del proceso en segundo plano
-SYMMETRIC_PID=$!
+echo "✅ Configuración de SymmetricDS insertada."
 
-# 2. Espera a que el esquema se cree. Aumentamos el tiempo para más seguridad.
-echo "--> Dando tiempo a SymmetricDS para que inicialice su esquema (esperando 25 segundos)..."
-sleep 25
+# --- Crear el flag y limpiar ---
+touch "$INIT_FLAG_FILE"
+echo "✅ Inicialización completada. Se creó el flag en $INIT_FLAG_FILE."
 
-# 3. Detén la instancia TEMPORAL. Ya cumplió su misión.
-echo "--> Deteniendo la instancia temporal de SymmetricDS (PID: $SYMMETRIC_PID)..."
-kill $SYMMETRIC_PID
-sleep 5 # Dale un momento para que libere los recursos
+echo "Iniciando el servidor SymmetricDS Master..."
 
-# 4. Ahora que las tablas existen y el servidor está detenido, inserta tu configuración.
-echo "--> Insertando configuración personalizada en la base de datos..."
-psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -f /app/insert_config.sql
-echo "--> Configuración personalizada insertada con éxito."
-
-# 5. Inicia la instancia FINAL y PERMANENTE de SymmetricDS en primer plano.
-#    Esta instancia leerá la base de datos que ya tiene el esquema Y tu configuración.
-echo "--> Iniciando instancia final de SymmetricDS..."
+# --- Iniciar el servidor ---
 exec /app/symmetric-ds-3.14.0/bin/sym --port 31415 --server

@@ -4,6 +4,11 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# Archivos de secretos y configuración específica del entorno
+.env
+docker-compose.yml
+docker-compose.online.yml
+
 ### STS ###
 .apt_generated
 .classpath

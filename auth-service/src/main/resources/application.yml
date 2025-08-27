@@ -5,11 +5,11 @@ spring:
   application:
     name: auth-service
   datasource:
-    # Apuntamos a la base de datos PostgreSQL del entorno offline
+    # Apunta a la base de datos PostgreSQL del entorno offline
     url: jdbc:postgresql://postgres-db-offline:5432/ecopila_db_offline
     driver-class-name: org.postgresql.Driver
-    username: admin
-    password: password
+    username: ${SPRING_DATASOURCE_USERNAME:admin}
+    password: ${SPRING_DATASOURCE_PASSWORD:password}
   jpa:
     open-in-view: false
     hibernate:
