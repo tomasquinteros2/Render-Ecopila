@@ -1,27 +1,27 @@
-# render.yaml - VERSIÓN FINAL CORREGIDA Y VALIDADA
+# render.yaml - VERSIÓN FINAL CORREGIDA (PROFILE OFFLINE)
 
 envVarGroups:
   - name: ecopila-shared-config
     envVars:
       - key: SPRING_PROFILES_ACTIVE
-        value: online
+        value: offline
       - key: MANAGEMENT_TRACING_SAMPLING_PROBABILITY
         value: 1.0
 
 databases:
-  - name: postgres-db-online
+  - name: postgres-db-offline
     plan: free
     postgresMajorVersion: 14
     ipAllowList: []
 
 services:
   - type: redis
-    name: redis-online
+    name: redis-offline
     plan: free
     ipAllowList: []
 
   - type: web
-    name: eureka-service-online
+    name: eureka-service-offline
     plan: free
     env: docker
     dockerfilePath: ./eureka-service/Dockerfile
@@ -31,7 +31,7 @@ services:
       - fromGroup: ecopila-shared-config
 
   - type: web
-    name: symmetricds-master
+    name: symmetricds-master-offline
     plan: free
     env: docker
     dockerfilePath: ./symmetricds/master/Dockerfile
@@ -42,13 +42,13 @@ services:
       - key: DATABASE_URL
         fromService:
           type: pserv   # ✅ Postgres
-          name: postgres-db-online
+          name: postgres-db-offline
           property: connectionString
       - key: SYMMETRIC_URL
-        value: https://symmetricds-master.onrender.com
+        value: https://symmetricds-master-offline.onrender.com
 
   - type: web
-    name: gateway
+    name: gateway-offline
     plan: free
     env: docker
     dockerfilePath: ./gateway/Dockerfile
@@ -58,15 +58,15 @@ services:
       - fromGroup: ecopila-shared-config
       - fromGroup: ecopila-secrets
       - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
+        value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATA_REDIS_URL
         fromService:
           type: redis   # ✅ Redis
-          name: redis-online
+          name: redis-offline
           property: connectionString
 
   - type: web
-    name: auth-service-online
+    name: auth-service-offline
     plan: free
     env: docker
     dockerfilePath: ./auth-service/Dockerfile
@@ -76,15 +76,15 @@ services:
       - fromGroup: ecopila-shared-config
       - fromGroup: ecopila-secrets
       - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
+        value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
           type: pserv   # ✅ Postgres
-          name: postgres-db-online
+          name: postgres-db-offline
           property: connectionString
 
   - type: web
-    name: producto-service-online
+    name: producto-service-offline
     plan: free
     env: docker
     dockerfilePath: ./microservicio_producto/Dockerfile
@@ -93,15 +93,15 @@ services:
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
+        value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
           type: pserv   # ✅ Postgres
-          name: postgres-db-online
+          name: postgres-db-offline
           property: connectionString
 
   - type: web
-    name: proveedor-service-online
+    name: proveedor-service-offline
     plan: free
     env: docker
     dockerfilePath: ./microservicio_proveedor/Dockerfile
@@ -110,15 +110,15 @@ services:
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
+        value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
           type: pserv   # ✅ Postgres
-          name: postgres-db-online
+          name: postgres-db-offline
           property: connectionString
 
   - type: web
-    name: tipo-producto-service-online
+    name: tipo-producto-service-offline
     plan: free
     env: docker
     dockerfilePath: ./microservicio_tipo_producto/Dockerfile
@@ -127,15 +127,15 @@ services:
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
+        value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
           type: pserv   # ✅ Postgres
-          name: postgres-db-online
+          name: postgres-db-offline
           property: connectionString
 
   - type: web
-    name: dolar-service-online
+    name: dolar-service-offline
     plan: free
     env: docker
     dockerfilePath: ./microservicio_dolar/Dockerfile
@@ -144,9 +144,9 @@ services:
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
+        value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
           type: pserv   # ✅ Postgres
-          name: postgres-db-online
+          name: postgres-db-offline
           property: connectionString
