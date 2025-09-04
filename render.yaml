@@ -1,4 +1,4 @@
-# render.yaml - VERSIÓN CON SINTAXIS DE HEALTHCHECK SIMPLIFICADA
+# render.yaml - VERSIÓN FINAL CORREGIDA
 
 envVarGroups:
   - name: ecopila-shared-config
@@ -26,7 +26,6 @@ services:
     env: docker
     dockerfilePath: ./eureka-service/Dockerfile
     dockerContext: .
-    # ✅ SOLUCIÓN: Usando la sintaxis simple
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
@@ -42,7 +41,7 @@ services:
       - fromGroup: ecopila-shared-config
       - key: DATABASE_URL
         fromService:
-          type: postgres
+          type: psql # ✅ CORRECCIÓN: El tipo es 'psql'
           name: postgres-db-online
           property: connectionString
       - key: SYMMETRIC_URL
@@ -54,7 +53,6 @@ services:
     env: docker
     dockerfilePath: ./gateway/Dockerfile
     dockerContext: .
-    # ✅ SOLUCIÓN: Usando la sintaxis simple
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
@@ -73,7 +71,6 @@ services:
     env: docker
     dockerfilePath: ./auth-service/Dockerfile
     dockerContext: .
-    # ✅ SOLUCIÓN: Usando la sintaxis simple
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
@@ -82,7 +79,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: postgres
+          type: psql # ✅ CORRECCIÓN: El tipo es 'psql'
           name: postgres-db-online
           property: connectionString
 
@@ -92,7 +89,6 @@ services:
     env: docker
     dockerfilePath: ./microservicio_producto/Dockerfile
     dockerContext: .
-    # ✅ SOLUCIÓN: Usando la sintaxis simple
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
@@ -100,7 +96,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: postgres
+          type: psql # ✅ CORRECCIÓN: El tipo es 'psql'
           name: postgres-db-online
           property: connectionString
 
@@ -110,7 +106,6 @@ services:
     env: docker
     dockerfilePath: ./microservicio_proveedor/Dockerfile
     dockerContext: .
-    # ✅ SOLUCIÓN: Usando la sintaxis simple
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
@@ -118,7 +113,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: postgres
+          type: psql # ✅ CORRECCIÓN: El tipo es 'psql'
           name: postgres-db-online
           property: connectionString
 
@@ -128,7 +123,6 @@ services:
     env: docker
     dockerfilePath: ./microservicio_tipo_producto/Dockerfile
     dockerContext: .
-    # ✅ SOLUCIÓN: Usando la sintaxis simple
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
@@ -136,7 +130,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: postgres
+          type: psql # ✅ CORRECCIÓN: El tipo es 'psql'
           name: postgres-db-online
           property: connectionString
 
@@ -146,7 +140,6 @@ services:
     env: docker
     dockerfilePath: ./microservicio_dolar/Dockerfile
     dockerContext: .
-    # ✅ SOLUCIÓN: Usando la sintaxis simple
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
@@ -154,7 +147,6 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: postgres
+          type: psql # ✅ CORRECCIÓN: El tipo es 'psql'
           name: postgres-db-online
           property: connectionString
-
