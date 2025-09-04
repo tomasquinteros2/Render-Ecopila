@@ -1,0 +1,172 @@
+# render.yaml - Configuración para desplegar EcopilaStock en Render
+
+# 1. Grupo de variables de entorno y secretos
+#    - Las variables aquí se aplicarán a todos los servicios.
+#    - El 'secretGroup' se crea en el dashboard de Render para guardar valores sensibles.
+envVarGroups:
+  - name: ecopila-shared-config
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: online
+      - key: MANAGEMENT_TRACING_SAMPLING_PROBABILITY
+        value: 1.0
+  - name: ecopila-secrets
+    secretGroup: ecopila-secrets # Debes crear este grupo en Render y añadir JWT_BASE64_SECRET
+
+services:
+  # 2. Servicios de Infraestructura (Base de datos, Redis, Eureka)
+  - type: psql
+    name: postgres-db-online
+    plan: free # O el plan que necesites
+    postgresMajorVersion: 14
+    ipAllowList: [] # Permite acceso desde cualquier servicio de tu cuenta
+
+  - type: redis
+    name: redis-online
+    plan: free # O el plan que necesites
+    ipAllowList: []
+
+  - type: web
+    name: eureka-service-online
+    plan: free
+    env: docker
+    dockerfilePath: ./eureka-service/Dockerfile
+    dockerContext: .
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 45
+    envVars:
+      - fromGroup: ecopila-shared-config
+
+  # 3. Servicio de Sincronización (SymmetricDS)
+  - type: web
+    name: symmetricds-master
+    plan: free
+    env: docker
+    dockerfilePath: ./symmetricds/master/Dockerfile
+    dockerContext: .
+    # El comando se define en el Dockerfile, pero si no, se puede poner aquí.
+    # command: /app/init-symmetric-master.sh
+    healthCheck:
+      path: / # SymmetricDS no tiene un endpoint de health por defecto, usamos la raíz.
+      initialDelaySeconds: 90 # Damos tiempo extra por el script de inicialización
+    envVars:
+      - fromGroup: ecopila-shared-config
+      # Inyectamos las credenciales de la BD de Render
+      - key: PG_HOST
+        fromService:
+          type: psql
+          name: postgres-db-online
+          property: host
+      - key: PG_USER
+        fromService:
+          type: psql
+          name: postgres-db-online
+          property: user
+      - key: PGPASSWORD
+        fromService:
+          type: psql
+          name: postgres-db-online
+          property: password
+      - key: PG_DB
+        fromService:
+          type: psql
+          name: postgres-db-online
+          property: database
+      # SymmetricDS necesita saber su propia URL pública para que los clientes se registren
+      - key: SYMMETRIC_URL
+        value: https://symmetricds-master.onrender.com
+
+  # 4. API Gateway
+  - type: web
+    name: gateway
+    plan: free
+    env: docker
+    dockerfilePath: ./gateway/Dockerfile
+    dockerContext: .
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
+    envVars:
+      - fromGroup: ecopila-shared-config
+      - fromGroup: ecopila-secrets
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: redis
+          name: redis-online
+          property: connectionString
+
+  # 5. Microservicios de Negocio
+  - type: web
+    name: auth-service-online
+    plan: free
+    env: docker
+    dockerfilePath: ./auth-service/Dockerfile
+    dockerContext: .
+    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    envVars:
+      - fromGroup: ecopila-shared-config
+      - fromGroup: ecopila-secrets
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      # Conexión a la BD de Render
+      - key: SPRING_DATASOURCE_URL
+        fromService: { type: psql, name: postgres-db-online, property: connectionString }
+
+  - type: web
+    name: producto-service-online
+    plan: free
+    env: docker
+    dockerfilePath: ./microservicio_producto/Dockerfile
+    dockerContext: .
+    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    envVars:
+      - fromGroup: ecopila-shared-config
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATASOURCE_URL
+        fromService: { type: psql, name: postgres-db-online, property: connectionString }
+
+  - type: web
+    name: proveedor-service-online
+    plan: free
+    env: docker
+    dockerfilePath: ./microservicio_proveedor/Dockerfile
+    dockerContext: .
+    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    envVars:
+      - fromGroup: ecopila-shared-config
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATASOURCE_URL
+        fromService: { type: psql, name: postgres-db-online, property: connectionString }
+
+  - type: web
+    name: tipo-producto-service-online
+    plan: free
+    env: docker
+    dockerfilePath: ./microservicio_tipo_producto/Dockerfile
+    dockerContext: .
+    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    envVars:
+      - fromGroup: ecopila-shared-config
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATASOURCE_URL
+        fromService: { type: psql, name: postgres-db-online, property: connectionString }
+
+  - type: web
+    name: dolar-service-online
+    plan: free
+    env: docker
+    dockerfilePath: ./microservicio_dolar/Dockerfile
+    dockerContext: .
+    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    envVars:
+      - fromGroup: ecopila-shared-config
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATASOURCE_URL
+        fromService: { type: psql, name: postgres-db-online, property: connectionString }
