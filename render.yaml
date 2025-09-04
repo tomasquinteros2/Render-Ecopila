@@ -1,4 +1,4 @@
-# render.yaml - VERSIÓN FINAL CORREGIDA (PROFILE OFFLINE)
+# render.yaml - VERSIÓN FINAL OFFLINE CORREGIDA Y VALIDADA
 
 envVarGroups:
   - name: ecopila-shared-config
@@ -41,7 +41,6 @@ services:
       - fromGroup: ecopila-shared-config
       - key: DATABASE_URL
         fromService:
-          type: postgres   # ✅ Postgres
           name: postgres-db-offline
           property: connectionString
       - key: SYMMETRIC_URL
@@ -61,7 +60,7 @@ services:
         value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATA_REDIS_URL
         fromService:
-          type: redis   # ✅ Redis
+          type: redis
           name: redis-offline
           property: connectionString
 
@@ -127,7 +126,6 @@ services:
         value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: postgres   # ✅ Postgres
           name: postgres-db-offline
           property: connectionString
 
@@ -144,8 +142,5 @@ services:
         value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: postgres   # ✅ Postgres
           name: postgres-db-offline
           property: connectionString
-
-
