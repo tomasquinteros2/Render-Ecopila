@@ -41,6 +41,7 @@ services:
       - fromGroup: ecopila-shared-config
       - key: DATABASE_URL
         fromService:
+          type: database
           name: postgres-db-offline
           property: connectionString
       - key: SYMMETRIC_URL
@@ -78,6 +79,7 @@ services:
         value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
+          type: database
           name: postgres-db-offline
           property: connectionString
 
@@ -94,6 +96,7 @@ services:
         value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
+          type: database
           name: postgres-db-offline
           property: connectionString
 
@@ -110,6 +113,7 @@ services:
         value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
+          type: database
           name: postgres-db-offline
           property: connectionString
 
@@ -126,6 +130,7 @@ services:
         value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
+          type: database
           name: postgres-db-offline
           property: connectionString
 
@@ -142,5 +147,6 @@ services:
         value: http://eureka-service-offline:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
+          type: database
           name: postgres-db-offline
           property: connectionString
