@@ -1,8 +1,5 @@
 # render.yaml - Configuración para desplegar EcopilaStock en Render
 
-# --- CORRECCIÓN ---
-# La sección 'envVarGroups' solo define grupos de variables en texto plano.
-# El grupo de secretos 'ecopila-secrets' se crea en el Dashboard de Render, no aquí.
 envVarGroups:
   - name: ecopila-shared-config
     envVars:
@@ -47,13 +44,25 @@ services:
     envVars:
       - fromGroup: ecopila-shared-config
       - key: PG_HOST
-        fromService: { type: postgres, name: postgres-db-online, property: host }
+        fromService:
+          type: postgres
+          name: postgres-db-online
+          property: host
       - key: PG_USER
-        fromService: { type: postgres, name: postgres-db-online, property: user }
+        fromService:
+          type: postgres
+          name: postgres-db-online
+          property: user
       - key: PGPASSWORD
-        fromService: { type: postgres, name: postgres-db-online, property: password }
+        fromService:
+          type: postgres
+          name: postgres-db-online
+          property: password
       - key: PG_DB
-        fromService: { type: postgres, name: postgres-db-online, property: database }
+        fromService:
+          type: postgres
+          name: postgres-db-online
+          property: database
       - key: SYMMETRIC_URL
         value: https://symmetricds-master.onrender.com
 
@@ -68,12 +77,14 @@ services:
       initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
-      # ✅ Correcto: Aquí SÍ se HACE REFERENCIA al grupo de secretos creado en el UI.
       - fromGroup: ecopila-secrets
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATA_REDIS_URL
-        fromService: { type: redis, name: redis-online, property: connectionString }
+        fromService:
+          type: redis
+          name: redis-online
+          property: connectionString
 
   - type: web
     name: auth-service-online
@@ -81,7 +92,6 @@ services:
     env: docker
     dockerfilePath: ./auth-service/Dockerfile
     dockerContext: .
-    # --- CORRECCIÓN: Expandido para mayor claridad ---
     healthCheck:
       path: /actuator/health
       initialDelaySeconds: 60
@@ -91,7 +101,10 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
+        fromService:
+          type: postgres
+          name: postgres-db-online
+          property: connectionString
 
   - type: web
     name: producto-service-online
@@ -107,7 +120,10 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
+        fromService:
+          type: postgres
+          name: postgres-db-online
+          property: connectionString
 
   - type: web
     name: proveedor-service-online
@@ -123,7 +139,10 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
+        fromService:
+          type: postgres
+          name: postgres-db-online
+          property: connectionString
 
   - type: web
     name: tipo-producto-service-online
@@ -139,7 +158,10 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
+        fromService:
+          type: postgres
+          name: postgres-db-online
+          property: connectionString
 
   - type: web
     name: dolar-service-online
@@ -155,5 +177,7 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
-
+        fromService:
+          type: postgres
+          name: postgres-db-online
+          property: connectionString
