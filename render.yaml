@@ -1,6 +1,8 @@
 # render.yaml - Configuración para desplegar EcopilaStock en Render
 
-# Grupos de variables de entorno para compartir entre servicios
+# --- CORRECCIÓN ---
+# La sección 'envVarGroups' solo define grupos de variables en texto plano.
+# El grupo de secretos 'ecopila-secrets' se crea en el Dashboard de Render, no aquí.
 envVarGroups:
   - name: ecopila-shared-config
     envVars:
@@ -8,18 +10,13 @@ envVarGroups:
         value: online
       - key: MANAGEMENT_TRACING_SAMPLING_PROBABILITY
         value: 1.0
-  - name: ecopila-secrets
-    secretGroup: ecopila-secrets # Debes crear este grupo en Render y añadir JWT_BASE64_SECRET
 
-# --- CORRECCIÓN PRINCIPAL ---
-# 1. Las bases de datos se definen en su propia sección 'databases', no en 'services'.
 databases:
   - name: postgres-db-online
     plan: free
     postgresMajorVersion: 14
-    ipAllowList: [] # Permite acceso desde cualquier servicio de tu cuenta
+    ipAllowList: []
 
-# 2. Los servicios web, workers y Redis van en la sección 'services'.
 services:
   - type: redis
     name: redis-online
@@ -49,27 +46,14 @@ services:
       initialDelaySeconds: 90
     envVars:
       - fromGroup: ecopila-shared-config
-      # Las referencias 'fromService' con 'type: postgres' son correctas.
       - key: PG_HOST
-        fromService:
-          type: postgres
-          name: postgres-db-online
-          property: host
+        fromService: { type: postgres, name: postgres-db-online, property: host }
       - key: PG_USER
-        fromService:
-          type: postgres
-          name: postgres-db-online
-          property: user
+        fromService: { type: postgres, name: postgres-db-online, property: user }
       - key: PGPASSWORD
-        fromService:
-          type: postgres
-          name: postgres-db-online
-          property: password
+        fromService: { type: postgres, name: postgres-db-online, property: password }
       - key: PG_DB
-        fromService:
-          type: postgres
-          name: postgres-db-online
-          property: database
+        fromService: { type: postgres, name: postgres-db-online, property: database }
       - key: SYMMETRIC_URL
         value: https://symmetricds-master.onrender.com
 
@@ -84,14 +68,12 @@ services:
       initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
+      # ✅ Correcto: Aquí SÍ se HACE REFERENCIA al grupo de secretos creado en el UI.
       - fromGroup: ecopila-secrets
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATA_REDIS_URL
-        fromService:
-          type: redis
-          name: redis-online
-          property: connectionString
+        fromService: { type: redis, name: redis-online, property: connectionString }
 
   - type: web
     name: auth-service-online
@@ -99,7 +81,10 @@ services:
     env: docker
     dockerfilePath: ./auth-service/Dockerfile
     dockerContext: .
-    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    # --- CORRECCIÓN: Expandido para mayor claridad ---
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - fromGroup: ecopila-secrets
@@ -114,7 +99,9 @@ services:
     env: docker
     dockerfilePath: ./microservicio_producto/Dockerfile
     dockerContext: .
-    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
@@ -128,7 +115,9 @@ services:
     env: docker
     dockerfilePath: ./microservicio_proveedor/Dockerfile
     dockerContext: .
-    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
@@ -142,7 +131,9 @@ services:
     env: docker
     dockerfilePath: ./microservicio_tipo_producto/Dockerfile
     dockerContext: .
-    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
@@ -156,10 +147,13 @@ services:
     env: docker
     dockerfilePath: ./microservicio_dolar/Dockerfile
     dockerContext: .
-    healthCheck: { path: /actuator/health, initialDelaySeconds: 60 }
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService: { type: postgres, name: postgres-db-online, property: connectionString }
+
