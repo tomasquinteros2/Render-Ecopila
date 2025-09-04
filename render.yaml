@@ -1,4 +1,4 @@
-# render.yaml - VERSIÓN CORREGIDA
+# render.yaml - VERSIÓN FINAL CORREGIDA
 
 envVarGroups:
   - name: ecopila-shared-config
@@ -26,7 +26,10 @@ services:
     env: docker
     dockerfilePath: ./eureka-service/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    # ✅ CORRECCIÓN: Estructura de healthCheck restaurada
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 45
     envVars:
       - fromGroup: ecopila-shared-config
 
@@ -36,12 +39,14 @@ services:
     env: docker
     dockerfilePath: ./symmetricds/master/Dockerfile
     dockerContext: .
-    healthCheckPath: / # SymmetricDS no tiene un endpoint de health por defecto
-    # Aumentamos el tiempo de espera inicial para dar tiempo al script de inicialización
-    initialDelaySeconds: 120
+    # ✅ CORRECCIÓN: Estructura de healthCheck restaurada
+    healthCheck:
+      path: / # SymmetricDS no tiene un endpoint de health por defecto
+    # ✅ CORRECCIÓN: initialDelaySeconds dentro de healthCheck
+    initialDelaySeconds: 120 # Damos tiempo extra para el script de inicialización
     envVars:
       - fromGroup: ecopila-shared-config
-      # ✅ PASO 1: Le pasamos la URL de conexión INTERNA completa.
+      # ✅ CORRECCIÓN: Pasamos la URL de conexión INTERNA completa
       - key: DATABASE_INTERNAL_URL
         fromService:
           type: database # ✅ CORRECCIÓN: El tipo es 'database'
@@ -56,7 +61,9 @@ services:
     env: docker
     dockerfilePath: ./gateway/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - fromGroup: ecopila-secrets
@@ -74,7 +81,9 @@ services:
     env: docker
     dockerfilePath: ./auth-service/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - fromGroup: ecopila-secrets
@@ -92,7 +101,9 @@ services:
     env: docker
     dockerfilePath: ./microservicio_producto/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
@@ -109,7 +120,9 @@ services:
     env: docker
     dockerfilePath: ./microservicio_proveedor/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
@@ -126,7 +139,9 @@ services:
     env: docker
     dockerfilePath: ./microservicio_tipo_producto/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
@@ -143,7 +158,9 @@ services:
     env: docker
     dockerfilePath: ./microservicio_dolar/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
       - key: EUREKA_URI
