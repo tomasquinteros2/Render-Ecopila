@@ -1,69 +1,62 @@
-# render.yaml - VERSIÓN FINAL CORREGIDA (PROFILE OFFLINE)
+# render.yaml - Configuración para desplegar el BACKEND en modo "OFFLINE"
 
+# --- Variables de Entorno Compartidas ---
+# Grupo para los secretos que no deben estar en el repositorio.
+# Debes crearlo en el Dashboard de Render: Env Groups > New Env Group
 envVarGroups:
-  - name: ecopila-shared-config
+  - name: ecopila-secrets-offline
     envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: offline
-      - key: MANAGEMENT_TRACING_SAMPLING_PROBABILITY
-        value: 1.0
+      # Define aquí tus secretos, como el de JWT.
+      # Clave: JWT_BASE64_SECRET, Valor: tu_clave_secreta_larga
+      - key: JWT_BASE64_SECRET
+        value: "hRFxCC9ibkLnqP9Js9FiWRbCme1dbLPLIRzQVPKmhK/LscULomJ/flJJpUaZ+M9fa+hT0X4gpeileNbQJrEBrw=="
+      - key: JWT_SECRET_KEY
+        value: "hRFxCC9ibkLnqP9Js9FiWRbCme1dbLPLIRzQVPKmhK/LscULomJ/flJJpUaZ+M9fa+hT0X4gpeileNbQJrEBrw=="
 
+# --- Infraestructura Base ---
 databases:
+  # Una base de datos PostgreSQL que simula tu 'postgres-db-offline'
   - name: postgres-db-offline
     plan: free
     postgresMajorVersion: 14
-    ipAllowList: []
 
 services:
+  # Un Redis para la caché del gateway
   - type: redis
     name: redis-offline
     plan: free
-    ipAllowList: []
 
-  - type: web
-    name: eureka-service-offline
-    plan: free
-    env: docker
-    dockerfilePath: ./eureka-service/Dockerfile
-    dockerContext: .
-    healthCheckPath: /actuator/health
-    envVars:
-      - fromGroup: ecopila-shared-config
-
-  - type: web
-    name: symmetricds-master-offline
-    plan: free
-    env: docker
-    dockerfilePath: ./symmetricds/master/Dockerfile
-    dockerContext: .
-    healthCheckPath: /
-    envVars:
-      - fromGroup: ecopila-shared-config
-      - key: DATABASE_URL
-        fromService:
-          type: pserv   # ✅ Postgres
-          name: postgres-db-offline
-          property: connectionString
-      - key: SYMMETRIC_URL
-        value: https://symmetricds-master-offline.onrender.com
-
+  # --- Microservicios de la Aplicación ---
   - type: web
     name: gateway-offline
     plan: free
     env: docker
     dockerfilePath: ./gateway/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
-      - fromGroup: ecopila-shared-config
-      - fromGroup: ecopila-secrets
-      - key: EUREKA_URI
-        value: http://eureka-service-offline:8761/eureka
-      - key: SPRING_DATA_REDIS_URL
+      - key: SPRING_PROFILES_ACTIVE
+        value: offline
+      - fromGroup: ecopila-secrets-offline
+      # Conexión directa a los servicios por su nombre en Render
+      - key: GATEWAY_AUTH_SERVICE_URI
+        value: http://auth-service-offline:8086
+      - key: GATEWAY_PRODUCTO_SERVICE_URI
+        value: http://producto-service-offline:8083
+      - key: GATEWAY_PROVEEDOR_SERVICE_URI
+        value: http://proveedor-service-offline:8084
+      - key: GATEWAY_TIPO_PRODUCTO_SERVICE_URI
+        value: http://tipo-producto-service-offline:8085
+      - key: GATEWAY_DOLAR_SERVICE_URI
+        value: http://dolar-service-offline:8082
+      # Conexión al Redis de Render
+      - key: REDIS_HOST
         fromService:
-          type: redis   # ✅ Redis
+          type: redis
           name: redis-offline
-          property: connectionString
+          property: host
 
   - type: web
     name: auth-service-offline
@@ -71,15 +64,15 @@ services:
     env: docker
     dockerfilePath: ./auth-service/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
-      - fromGroup: ecopila-shared-config
-      - fromGroup: ecopila-secrets
-      - key: EUREKA_URI
-        value: http://eureka-service-offline:8761/eureka
+      - key: SPRING_PROFILES_ACTIVE
+        value: offline
+      - fromGroup: ecopila-secrets-offline
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: pserv   # ✅ Postgres
           name: postgres-db-offline
           property: connectionString
 
@@ -89,14 +82,14 @@ services:
     env: docker
     dockerfilePath: ./microservicio_producto/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
-      - fromGroup: ecopila-shared-config
-      - key: EUREKA_URI
-        value: http://eureka-service-offline:8761/eureka
+      - key: SPRING_PROFILES_ACTIVE
+        value: offline
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: pserv   # ✅ Postgres
           name: postgres-db-offline
           property: connectionString
 
@@ -106,14 +99,14 @@ services:
     env: docker
     dockerfilePath: ./microservicio_proveedor/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
-      - fromGroup: ecopila-shared-config
-      - key: EUREKA_URI
-        value: http://eureka-service-offline:8761/eureka
+      - key: SPRING_PROFILES_ACTIVE
+        value: offline
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: pserv   # ✅ Postgres
           name: postgres-db-offline
           property: connectionString
 
@@ -123,14 +116,14 @@ services:
     env: docker
     dockerfilePath: ./microservicio_tipo_producto/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
-      - fromGroup: ecopila-shared-config
-      - key: EUREKA_URI
-        value: http://eureka-service-offline:8761/eureka
+      - key: SPRING_PROFILES_ACTIVE
+        value: offline
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: pserv   # ✅ Postgres
           name: postgres-db-offline
           property: connectionString
 
@@ -140,13 +133,13 @@ services:
     env: docker
     dockerfilePath: ./microservicio_dolar/Dockerfile
     dockerContext: .
-    healthCheckPath: /actuator/health
+    healthCheck:
+      path: /actuator/health
+      initialDelaySeconds: 60
     envVars:
-      - fromGroup: ecopila-shared-config
-      - key: EUREKA_URI
-        value: http://eureka-service-offline:8761/eureka
+      - key: SPRING_PROFILES_ACTIVE
+        value: offline
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: pserv   # ✅ Postgres
           name: postgres-db-offline
           property: connectionString
