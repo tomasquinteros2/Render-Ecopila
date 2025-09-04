@@ -1,4 +1,4 @@
-# render.yaml - VERSIÓN FINAL CORREGIDA
+# render.yaml - VERSIÓN FINAL CORREGIDA Y VALIDADA
 
 envVarGroups:
   - name: ecopila-shared-config
@@ -41,7 +41,7 @@ services:
       - fromGroup: ecopila-shared-config
       - key: DATABASE_URL
         fromService:
-          # ✅ CORRECCIÓN: Se omite el 'type' al referenciar un recurso de 'databases'
+          type: pserv   # ✅ Postgres
           name: postgres-db-online
           property: connectionString
       - key: SYMMETRIC_URL
@@ -61,7 +61,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATA_REDIS_URL
         fromService:
-          type: redis # <-- Este se queda porque Redis es un 'service'
+          type: redis   # ✅ Redis
           name: redis-online
           property: connectionString
 
@@ -79,7 +79,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          # ✅ CORRECCIÓN: Se omite el 'type'
+          type: pserv   # ✅ Postgres
           name: postgres-db-online
           property: connectionString
 
@@ -96,7 +96,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          # ✅ CORRECCIÓN: Se omite el 'type'
+          type: pserv   # ✅ Postgres
           name: postgres-db-online
           property: connectionString
 
@@ -113,7 +113,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          # ✅ CORRECCIÓN: Se omite el 'type'
+          type: pserv   # ✅ Postgres
           name: postgres-db-online
           property: connectionString
 
@@ -130,7 +130,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          # ✅ CORRECCIÓN: Se omite el 'type'
+          type: pserv   # ✅ Postgres
           name: postgres-db-online
           property: connectionString
 
@@ -147,6 +147,6 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          # ✅ CORRECCIÓN: Se omite el 'type'
+          type: pserv   # ✅ Postgres
           name: postgres-db-online
           property: connectionString
