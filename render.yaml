@@ -1,4 +1,4 @@
-# render.yaml - VERSIÓN FINAL CORREGIDA
+# render.yaml - VERSIÓN CON INDENTACIÓN CORREGIDA
 
 envVarGroups:
   - name: ecopila-shared-config
@@ -26,7 +26,6 @@ services:
     env: docker
     dockerfilePath: ./eureka-service/Dockerfile
     dockerContext: .
-    # ✅ CORRECCIÓN: Estructura de healthCheck restaurada
     healthCheck:
       path: /actuator/health
       initialDelaySeconds: 45
@@ -39,19 +38,17 @@ services:
     env: docker
     dockerfilePath: ./symmetricds/master/Dockerfile
     dockerContext: .
-    # ✅ CORRECCIÓN: Estructura de healthCheck restaurada
+    # ✅ CORRECCIÓN DE INDENTACIÓN APLICADA AQUÍ
     healthCheck:
       path: / # SymmetricDS no tiene un endpoint de health por defecto
-    # ✅ CORRECCIÓN: initialDelaySeconds dentro de healthCheck
-    initialDelaySeconds: 120 # Damos tiempo extra para el script de inicialización
+      initialDelaySeconds: 120 # Damos tiempo extra para el script de inicialización
     envVars:
       - fromGroup: ecopila-shared-config
-      # ✅ CORRECCIÓN: Pasamos la URL de conexión INTERNA completa
       - key: DATABASE_INTERNAL_URL
         fromService:
-          type: database # ✅ CORRECCIÓN: El tipo es 'database'
+          type: database
           name: postgres-db-online
-          property: internalConnectionString # Usamos la URL interna para mejor rendimiento
+          property: internalConnectionString
       - key: SYMMETRIC_URL
         value: https://symmetricds-master.onrender.com
 
@@ -91,7 +88,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database # ✅ CORRECCIÓN: El tipo es 'database'
+          type: database
           name: postgres-db-online
           property: connectionString
 
@@ -110,7 +107,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database # ✅ CORRECCIÓN: El tipo es 'database'
+          type: database
           name: postgres-db-online
           property: connectionString
 
@@ -129,7 +126,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database # ✅ CORRECCIÓN: El tipo es 'database'
+          type: database
           name: postgres-db-online
           property: connectionString
 
@@ -148,7 +145,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database # ✅ CORRECCIÓN: El tipo es 'database'
+          type: database
           name: postgres-db-online
           property: connectionString
 
@@ -167,6 +164,6 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database # ✅ CORRECCIÓN: El tipo es 'database'
+          type: database
           name: postgres-db-online
           property: connectionString
