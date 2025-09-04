@@ -37,15 +37,14 @@ services:
     env: docker
     dockerfilePath: ./symmetricds/master/Dockerfile
     dockerContext: .
-    # ✅ SOLUCIÓN: Usando la sintaxis simple
     healthCheckPath: /
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: DATABASE_INTERNAL_URL
+      - key: DATABASE_URL
         fromService:
-          type: database
+          type: postgres
           name: postgres-db-online
-          property: internalConnectionString
+          property: connectionString
       - key: SYMMETRIC_URL
         value: https://symmetricds-master.onrender.com
 
@@ -83,7 +82,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database
+          type: postgres
           name: postgres-db-online
           property: connectionString
 
@@ -101,7 +100,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database
+          type: postgres
           name: postgres-db-online
           property: connectionString
 
@@ -119,7 +118,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database
+          type: postgres
           name: postgres-db-online
           property: connectionString
 
@@ -137,7 +136,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database
+          type: postgres
           name: postgres-db-online
           property: connectionString
 
@@ -155,6 +154,7 @@ services:
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
         fromService:
-          type: database
+          type: postgres
           name: postgres-db-online
           property: connectionString
+
