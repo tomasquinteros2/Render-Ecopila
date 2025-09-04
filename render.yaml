@@ -1,5 +1,6 @@
 # render.yaml - Configuración para desplegar EcopilaStock en Render
 
+# Grupos de variables de entorno para compartir entre servicios
 envVarGroups:
   - name: ecopila-shared-config
     envVars:
@@ -10,14 +11,16 @@ envVarGroups:
   - name: ecopila-secrets
     secretGroup: ecopila-secrets # Debes crear este grupo en Render y añadir JWT_BASE64_SECRET
 
-services:
-  # 2. Servicios de Infraestructura (Base de datos, Redis, Eureka)
-  - type: postgres # <-- CORRECCIÓN AQUÍ
-    name: postgres-db-online
+# --- CORRECCIÓN PRINCIPAL ---
+# 1. Las bases de datos se definen en su propia sección 'databases', no en 'services'.
+databases:
+  - name: postgres-db-online
     plan: free
     postgresMajorVersion: 14
-    ipAllowList: []
+    ipAllowList: [] # Permite acceso desde cualquier servicio de tu cuenta
 
+# 2. Los servicios web, workers y Redis van en la sección 'services'.
+services:
   - type: redis
     name: redis-online
     plan: free
@@ -35,7 +38,6 @@ services:
     envVars:
       - fromGroup: ecopila-shared-config
 
-  # 3. Servicio de Sincronización (SymmetricDS)
   - type: web
     name: symmetricds-master
     plan: free
@@ -47,30 +49,30 @@ services:
       initialDelaySeconds: 90
     envVars:
       - fromGroup: ecopila-shared-config
+      # Las referencias 'fromService' con 'type: postgres' son correctas.
       - key: PG_HOST
         fromService:
-          type: postgres # <-- CORRECCIÓN AQUÍ
+          type: postgres
           name: postgres-db-online
           property: host
       - key: PG_USER
         fromService:
-          type: postgres # <-- CORRECCIÓN AQUÍ
+          type: postgres
           name: postgres-db-online
           property: user
       - key: PGPASSWORD
         fromService:
-          type: postgres # <-- CORRECCIÓN AQUÍ
+          type: postgres
           name: postgres-db-online
           property: password
       - key: PG_DB
         fromService:
-          type: postgres # <-- CORRECCIÓN AQUÍ
+          type: postgres
           name: postgres-db-online
           property: database
       - key: SYMMETRIC_URL
         value: https://symmetricds-master.onrender.com
 
-  # 4. API Gateway
   - type: web
     name: gateway
     plan: free
@@ -91,7 +93,6 @@ services:
           name: redis-online
           property: connectionString
 
-  # 5. Microservicios de Negocio
   - type: web
     name: auth-service-online
     plan: free
@@ -105,7 +106,7 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString } # <-- CORRECCIÓN AQUÍ
+        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
 
   - type: web
     name: producto-service-online
@@ -119,7 +120,7 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString } # <-- CORRECCIÓN AQUÍ
+        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
 
   - type: web
     name: proveedor-service-online
@@ -133,7 +134,7 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString } # <-- CORRECCIÓN AQUÍ
+        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
 
   - type: web
     name: tipo-producto-service-online
@@ -147,7 +148,7 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString } # <-- CORRECCIÓN AQUÍ
+        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
 
   - type: web
     name: dolar-service-online
@@ -161,4 +162,4 @@ services:
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATASOURCE_URL
-        fromService: { type: postgres, name: postgres-db-online, property: connectionString } # <-- CORRECCIÓN AQUÍ
+        fromService: { type: postgres, name: postgres-db-online, property: connectionString }
