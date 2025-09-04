@@ -1,38 +1,12 @@
-# render.yaml - Configuración para desplegar EcopilaStock en Render
-# VERSIÓN VERIFICADA: Usa solo espacios para la indentación.
-
-# Grupos de variables de entorno compartidas
-envVarGroups:
-  - name: ecopila-shared-config
-    envVars:
-      - key: SPRING_PROFILES_ACTIVE
-        value: online
-      - key: MANAGEMENT_TRACING_SAMPLING_PROBABILITY
-        value: 1.0
-
-# Definición de la base de datos
-databases:
-  - name: postgres-db-online
-    plan: free
-    postgresMajorVersion: 14
-    ipAllowList: []
-
-# Definición de los servicios
 services:
-  - type: redis
-    name: redis-online
+  - type: pserv
+    name: postgres-db-online
     plan: free
-    ipAllowList: []
-
-  - type: web
-    name: eureka-service-online
-    plan: free
-    env: docker
-    dockerfilePath: ./eureka-service/Dockerfile
-    dockerContext: .
-    healthCheckPath: /actuator/health
-    envVars:
-      - fromGroup: ecopila-shared-config
+    env: postgres
+    disk:
+      name: data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 1
 
   - type: web
     name: symmetricds-master
@@ -43,31 +17,43 @@ services:
     healthCheckPath: /
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: PG_HOST
+      - key: DATABASE_URL
         fromService:
-          type: postgres
+          type: pserv
           name: postgres-db-online
-          property: host
-      - key: PG_USER
-        fromService:
-          type: postgres
-          name: postgres-db-online
-          property: user
-      - key: PGPASSWORD
-        fromService:
-          type: postgres
-          name: postgres-db-online
-          property: password
-      - key: PG_DB
-        fromService:
-          type: postgres
-          name: postgres-db-online
-          property: database
+          property: connectionString
       - key: SYMMETRIC_URL
         value: https://symmetricds-master.onrender.com
 
   - type: web
-    name: gateway
+    name: symmetricds-node
+    plan: free
+    env: docker
+    dockerfilePath: ./symmetricds/node/Dockerfile
+    dockerContext: .
+    healthCheckPath: /
+    envVars:
+      - fromGroup: ecopila-shared-config
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: postgres-db-online
+          property: connectionString
+      - key: SYMMETRIC_URL
+        value: https://symmetricds-node.onrender.com
+
+  - type: web
+    name: eureka-server
+    plan: free
+    env: docker
+    dockerfilePath: ./eureka/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    envVars:
+      - fromGroup: ecopila-shared-config
+
+  - type: web
+    name: gateway-server
     plan: free
     env: docker
     dockerfilePath: ./gateway/Dockerfile
@@ -75,97 +61,71 @@ services:
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
-      - fromGroup: ecopila-secrets
-      - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
-      - key: SPRING_DATA_REDIS_URL
-        fromService:
-          type: redis
-          name: redis-online
-          property: connectionString
 
   - type: web
-    name: auth-service-online
+    name: microservicio-admin
     plan: free
     env: docker
-    dockerfilePath: ./auth-service/Dockerfile
+    dockerfilePath: ./microservicio-admin/Dockerfile
     dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
-      - fromGroup: ecopila-secrets
-      - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
-      - key: SPRING_DATASOURCE_URL
+      - key: DATABASE_URL
         fromService:
-          type: postgres
+          type: pserv
           name: postgres-db-online
           property: connectionString
 
   - type: web
-    name: producto-service-online
+    name: microservicio-user
     plan: free
     env: docker
-    dockerfilePath: ./microservicio_producto/Dockerfile
+    dockerfilePath: ./microservicio-user/Dockerfile
     dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
-      - key: SPRING_DATASOURCE_URL
+      - key: DATABASE_URL
         fromService:
-          type: postgres
+          type: pserv
           name: postgres-db-online
           property: connectionString
 
   - type: web
-    name: proveedor-service-online
+    name: microservicio-monopatin
     plan: free
     env: docker
-    dockerfilePath: ./microservicio_proveedor/Dockerfile
+    dockerfilePath: ./microservicio-monopatin/Dockerfile
     dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
-      - key: SPRING_DATASOURCE_URL
+      - key: DATABASE_URL
         fromService:
-          type: postgres
+          type: pserv
           name: postgres-db-online
           property: connectionString
 
   - type: web
-    name: tipo-producto-service-online
+    name: microservicio-viaje
     plan: free
     env: docker
-    dockerfilePath: ./microservicio_tipo_producto/Dockerfile
+    dockerfilePath: ./microservicio-viaje/Dockerfile
     dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
-      - key: SPRING_DATASOURCE_URL
+      - key: DATABASE_URL
         fromService:
-          type: postgres
+          type: pserv
           name: postgres-db-online
           property: connectionString
 
-  - type: web
-    name: dolar-service-online
-    plan: free
-    env: docker
-    dockerfilePath: ./microservicio_dolar/Dockerfile
-    dockerContext: .
-    healthCheckPath: /actuator/health
+envVarGroups:
+  - name: ecopila-shared-config
     envVars:
-      - fromGroup: ecopila-shared-config
-      - key: EUREKA_URI
-        value: http://eureka-service-online:8761/eureka
-      - key: SPRING_DATASOURCE_URL
-        fromService:
-          type: postgres
-          name: postgres-db-online
-          property: connectionString
+      - key: EUREKA_SERVER
+        value: https://eureka-server.onrender.com/eureka
+      - key: GATEWAY_SERVER
+        value: https://gateway-server.onrender.com
