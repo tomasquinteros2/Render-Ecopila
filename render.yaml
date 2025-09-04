@@ -1,5 +1,7 @@
 # render.yaml - Configuración para desplegar EcopilaStock en Render
+# VERSIÓN VERIFICADA: Usa solo espacios para la indentación.
 
+# Grupos de variables de entorno compartidas
 envVarGroups:
   - name: ecopila-shared-config
     envVars:
@@ -8,12 +10,14 @@ envVarGroups:
       - key: MANAGEMENT_TRACING_SAMPLING_PROBABILITY
         value: 1.0
 
+# Definición de la base de datos (sección de nivel superior)
 databases:
   - name: postgres-db-online
     plan: free
     postgresMajorVersion: 14
-    ipAllowList: []
+    ipAllowList: [] # Permite acceso desde cualquier servicio de tu cuenta
 
+# Definición de los servicios (web, redis, etc.)
 services:
   - type: redis
     name: redis-online
@@ -39,7 +43,7 @@ services:
     dockerfilePath: ./symmetricds/master/Dockerfile
     dockerContext: .
     healthCheck:
-      path: /
+      path: / # SymmetricDS no tiene un endpoint de health por defecto
       initialDelaySeconds: 90
     envVars:
       - fromGroup: ecopila-shared-config
@@ -77,7 +81,7 @@ services:
       initialDelaySeconds: 60
     envVars:
       - fromGroup: ecopila-shared-config
-      - fromGroup: ecopila-secrets
+      - fromGroup: ecopila-secrets # Referencia al grupo creado en el UI de Render
       - key: EUREKA_URI
         value: http://eureka-service-online:8761/eureka
       - key: SPRING_DATA_REDIS_URL
