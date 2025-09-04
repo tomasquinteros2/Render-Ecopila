@@ -1,12 +1,34 @@
-services:
-  - type: pserv
-    name: postgres-db-online
+# render.yaml - VERSIÓN CORREGIDA
+
+envVarGroups:
+  - name: ecopila-shared-config
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: online
+      - key: MANAGEMENT_TRACING_SAMPLING_PROBABILITY
+        value: 1.0
+
+databases:
+  - name: postgres-db-online
     plan: free
-    env: postgres
-    disk:
-      name: data
-      mountPath: /var/lib/postgresql/data
-      sizeGB: 1
+    postgresMajorVersion: 14
+    ipAllowList: []
+
+services:
+  - type: redis
+    name: redis-online
+    plan: free
+    ipAllowList: []
+
+  - type: web
+    name: eureka-service-online
+    plan: free
+    env: docker
+    dockerfilePath: ./eureka-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    envVars:
+      - fromGroup: ecopila-shared-config
 
   - type: web
     name: symmetricds-master
@@ -14,46 +36,22 @@ services:
     env: docker
     dockerfilePath: ./symmetricds/master/Dockerfile
     dockerContext: .
-    healthCheckPath: /
+    healthCheckPath: / # SymmetricDS no tiene un endpoint de health por defecto
+    # Aumentamos el tiempo de espera inicial para dar tiempo al script de inicialización
+    initialDelaySeconds: 120
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: DATABASE_URL
+      # ✅ PASO 1: Le pasamos la URL de conexión INTERNA completa.
+      - key: DATABASE_INTERNAL_URL
         fromService:
-          type: pserv
+          type: database # ✅ CORRECCIÓN: El tipo es 'database'
           name: postgres-db-online
-          property: connectionString
+          property: internalConnectionString # Usamos la URL interna para mejor rendimiento
       - key: SYMMETRIC_URL
         value: https://symmetricds-master.onrender.com
 
   - type: web
-    name: symmetricds-node
-    plan: free
-    env: docker
-    dockerfilePath: ./symmetricds/node/Dockerfile
-    dockerContext: .
-    healthCheckPath: /
-    envVars:
-      - fromGroup: ecopila-shared-config
-      - key: DATABASE_URL
-        fromService:
-          type: pserv
-          name: postgres-db-online
-          property: connectionString
-      - key: SYMMETRIC_URL
-        value: https://symmetricds-node.onrender.com
-
-  - type: web
-    name: eureka-server
-    plan: free
-    env: docker
-    dockerfilePath: ./eureka/Dockerfile
-    dockerContext: .
-    healthCheckPath: /actuator/health
-    envVars:
-      - fromGroup: ecopila-shared-config
-
-  - type: web
-    name: gateway-server
+    name: gateway
     plan: free
     env: docker
     dockerfilePath: ./gateway/Dockerfile
@@ -61,71 +59,97 @@ services:
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
+      - fromGroup: ecopila-secrets
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATA_REDIS_URL
+        fromService:
+          type: redis
+          name: redis-online
+          property: connectionString
 
   - type: web
-    name: microservicio-admin
+    name: auth-service-online
     plan: free
     env: docker
-    dockerfilePath: ./microservicio-admin/Dockerfile
+    dockerfilePath: ./auth-service/Dockerfile
     dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: DATABASE_URL
+      - fromGroup: ecopila-secrets
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATASOURCE_URL
         fromService:
-          type: pserv
+          type: database # ✅ CORRECCIÓN: El tipo es 'database'
           name: postgres-db-online
           property: connectionString
 
   - type: web
-    name: microservicio-user
+    name: producto-service-online
     plan: free
     env: docker
-    dockerfilePath: ./microservicio-user/Dockerfile
+    dockerfilePath: ./microservicio_producto/Dockerfile
     dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: DATABASE_URL
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATASOURCE_URL
         fromService:
-          type: pserv
+          type: database # ✅ CORRECCIÓN: El tipo es 'database'
           name: postgres-db-online
           property: connectionString
 
   - type: web
-    name: microservicio-monopatin
+    name: proveedor-service-online
     plan: free
     env: docker
-    dockerfilePath: ./microservicio-monopatin/Dockerfile
+    dockerfilePath: ./microservicio_proveedor/Dockerfile
     dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: DATABASE_URL
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATASOURCE_URL
         fromService:
-          type: pserv
+          type: database # ✅ CORRECCIÓN: El tipo es 'database'
           name: postgres-db-online
           property: connectionString
 
   - type: web
-    name: microservicio-viaje
+    name: tipo-producto-service-online
     plan: free
     env: docker
-    dockerfilePath: ./microservicio-viaje/Dockerfile
+    dockerfilePath: ./microservicio_tipo_producto/Dockerfile
     dockerContext: .
     healthCheckPath: /actuator/health
     envVars:
       - fromGroup: ecopila-shared-config
-      - key: DATABASE_URL
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATASOURCE_URL
         fromService:
-          type: pserv
+          type: database # ✅ CORRECCIÓN: El tipo es 'database'
           name: postgres-db-online
           property: connectionString
 
-envVarGroups:
-  - name: ecopila-shared-config
+  - type: web
+    name: dolar-service-online
+    plan: free
+    env: docker
+    dockerfilePath: ./microservicio_dolar/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
     envVars:
-      - key: EUREKA_SERVER
-        value: https://eureka-server.onrender.com/eureka
-      - key: GATEWAY_SERVER
-        value: https://gateway-server.onrender.com
+      - fromGroup: ecopila-shared-config
+      - key: EUREKA_URI
+        value: http://eureka-service-online:8761/eureka
+      - key: SPRING_DATASOURCE_URL
+        fromService:
+          type: database # ✅ CORRECCIÓN: El tipo es 'database'
+          name: postgres-db-online
+          property: connectionString
